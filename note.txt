@@ -1,0 +1,11 @@
+Resources: 
+# Quadrotor drone (pid controller )
+https://www.mdpi.com/2226-4310/10/1/59
+https://github.com/brianwade1/quadcopter_with_PID_controller
+https://liu.diva-portal.org/smash/get/diva2:1129641/FULLTEXT01.pdf
+https://gpiozero.readthedocs.io/en/stable/
+https://www.sciencedirect.com/science/article/abs/pii/S1367578823000640
+https://www.researchgate.net/publication/230633819_Flight_PID_Controller_Design_for_a_UAV_Quadrotor
+ --> avr-gcc pid controller 
+https://www.hocavr.com/2018/06/ieu-khien-ong-co-dc-servo-pid.html
+
