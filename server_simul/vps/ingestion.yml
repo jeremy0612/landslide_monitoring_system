@@ -1,0 +1,24 @@
+name: landslide_ingestion
+channels:
+  - defaults
+dependencies:
+  - numpy=1.26.4=py312hc5e2394_0
+  - numpy-base=1.26.4=py312h0da6c21_0
+  - openpyxl=3.0.10=py312h5eee18b_0
+  - openssl=3.0.13=h7f8727e_0
+  - pandas=2.1.4=py312h526ad5a_0
+  - pip=23.3.1=py312h06a4308_0
+  - psycopg2=2.9.9=py312h5eee18b_0
+  - pycparser=2.21=pyhd3eb1b0_0
+  - pymysql=1.0.2=py312h06a4308_1
+  - python=3.12.2=h996f2a0_0
+  - sqlite=3.41.2=h5eee18b_0
+  - pip:
+      - openmeteo-requests==1.2.0
+      - openmeteo-sdk==1.11.3
+      - requests==2.31.0
+      - requests-cache==1.2.0
+      - retry-requests==2.0.0
+      - url-normalize==1.4.3
+      - urllib3==2.2.1
+prefix: /home/j3r3my0612/miniconda3/envs/landslide_ingestion
