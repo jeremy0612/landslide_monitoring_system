@@ -5,6 +5,7 @@ from .config import load_config
 class PostgreSQLConnection:
     def __init__(self, config=None):
         self.config = load_config()
+        print(self.config)
         self.conn = None
 
     def connect(self):

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+// Package names are ignored by the Python proto compiler.
+// Instead, the directory structure is used to generate Python packages.
+package order_command;
+
+service PingService 
+{
+  rpc ping(PingRequest) returns (PingResponse) {}
+  rpc command(ExeTask) returns (ExeResult) {}
+}
+message ExeResult 
+{
+  string message = 1;
+}
+
+message ExeTask 
+{
+  string command = 1;
+}
+
+message PingRequest 
+{
+
+}
+
+message PingResponse 
+{
+  string message = 1;
+}

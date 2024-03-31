@@ -1,8 +1,13 @@
 import pandas as pd
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--source', type=str, default='csv', help='Source of the data (csv or excel)')
+args = parser.parse_args()
 
 # Data paths
-csv_file_path = "../../datasource/dev_sample.csv"
-excel_file_path = "../../datasource/dev_sample.xlsx"
+csv_file_path = "/app/data/dev_sample.csv"
+excel_file_path = "/app/data/dev_sample.xlsx"
 
 # Select the columns you need
 selected_columns = ["id","date", "time", "country", "near", "continentcode",
@@ -30,7 +35,6 @@ def extract_data(source):
         filtered_data_df = pd.read_excel(excel_file_path)[selected_columns]
     filtered_data_df["time"] = filtered_data_df['time'].map(convert_to_datetime)
     filtered_data_df["date"] = filtered_data_df['date'].map(convert_to_date)
-
     # print(filtered_data_df.info())
 
     # Create a new DataFrame for Date
@@ -47,15 +51,22 @@ def extract_data(source):
     # print(hazard_df.head(10))
 
     merged_df = date_df.merge(location_df, on='id', how='outer').merge(hazard_df, on='id', how='outer')
-    print(merged_df.head(10))
-
+    if source == 'csv':
+        merged_df.to_json('/app/buffer/date_csv.json', orient='records')
+    else:
+        merged_df.to_json('/app/buffer/date_xlsx.json', orient='records')
+    return merged_df
     # Push to JSON files
-    date_df.to_json('tmp/date.json', orient='records')
-    location_df.to_json('tmp/location.json', orient='records')
-    hazard_df.to_json('tmp/hazard.json', orient='records')
+    # date_df.to_json('/buffer/date.json', orient='records')
+    # location_df.to_json('/buffer/location.json', orient='records')
+    # hazard_df.to_json('/buffer/hazard.json', orient='records')
     
 
 
 if __name__ == '__main__':
-    extract_data('csv')
-    extract_data('xlsx')
+    if args.source == 'csv':
+        print('Extracting data from CSV file')
+        extract_data('csv')
+    else:
+        print('Extracting data from Excel file')
+        extract_data('xlsx')

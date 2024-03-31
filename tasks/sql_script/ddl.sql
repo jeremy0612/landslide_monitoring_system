@@ -2,8 +2,8 @@
 CREATE TABLE Location (
   location_id SERIAL PRIMARY KEY,
   country VARCHAR(50) NULL,
-  near VARCHAR(50) NULL,
-  continent VARCHAR(2)  NULL,
+  near VARCHAR(100) NULL,
+  continent VARCHAR(4)  NULL,
   longitude DECIMAL(11, 8) NOT NULL,  -- High precision for coordinates
   latitude DECIMAL(11, 8) NOT NULL   -- High precision for coordinates
 );
@@ -11,7 +11,7 @@ CREATE TABLE Location (
 -- 2. Create the Datetime table
 CREATE TABLE Datetime (
   datetime_id SERIAL PRIMARY KEY,
-  date DATE NOT NULL,
+  date smallint NOT NULL,
   time TIME NULL,
   timezone VARCHAR(15) NOT NULL,
   month SMALLINT NOT NULL CHECK (month BETWEEN 1 AND 12),  -- Enforce month range (1-12)
@@ -56,14 +56,14 @@ CREATE TABLE Event (
   hazard_type VARCHAR(50) NULL,
   landslide_type VARCHAR(50) NULL,
   size VARCHAR(20) NULL,
-  date DATE NOT NULL,
+  date SMALLINT NOT NULL,
   time TIME NULL,
   timezone VARCHAR(15) NOT NULL,
   month SMALLINT NOT NULL CHECK (month BETWEEN 1 AND 12),  -- Enforce month range (1-12)
   year INTEGER NOT NULL,
   country VARCHAR(50) NULL,
-  near VARCHAR(50) NULL,
-  continent VARCHAR(2)  NULL,
+  near VARCHAR(100) NULL,
+  continent VARCHAR(4)  NULL,
   longitude DECIMAL(11, 8) NOT NULL,  -- High precision for coordinates
   latitude DECIMAL(11, 8) NOT NULL   -- High precision for coordinates
 );

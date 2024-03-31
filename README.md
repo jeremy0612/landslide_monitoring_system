@@ -24,3 +24,22 @@ The simple reprocessing task to extract .csv and .xlsx file and call REST API us
 
 ## AI Model
 ## Web UI
+
+
+## Construction
+
+To construct the project, there are 2 parts: embedded part & cloud part. For embedded just follow the [instruction here](server_simul/raspi/README.md). 
+
+The main computing is implemented in docker platform for a easily packaging and scaling. The detail desciption is [here](server_simul/vps/README.md)
+
+### Setup protobuf with python compiler
+Due to communication via gRPC, I suggest a proto file contains messages service definition in ./protos folder. Before building pipeline, please install dependencies for python gRPC compiler following this [guide](https://grpc.io/docs/languages/python/quickstart/). If you face an error while running the command to generate code from proto file ( like me :D), you just need to reinstall the grpc packages. 
+
+One way to make it simpler is to use conda and create an environment using my [description file](server_simul/vps/py_executor/grpc.yml). Install conda and run the following command, an 'grpc' env will be created.
+```
+conda env create -f ./server_simul/vps/py_executor/grpc.yml 
+```
+Activate the env and run the shell script to build classes with gRPC compiler. 
+```
+sh generate_proto.sh
+```
