@@ -29,5 +29,18 @@ As mentioned, the airflow scheduler just managed the pipeline while the executor
 
 Since the gRPC python components are essential for 2 container & a message service definiton is needed, I packaged the dependencies in airflow dockerfile and executor dockerfile. It would automatically install all dependencies along with compose up.
 
+### GRPC connection in airflow
+
+There is a required connection need to be create in order to allow the airflow scheduler to connect to executor via RPC. Go to Admin --> Connection and make a new connection like below. 
+
+| Field Name | Value | Description |
+|---|---|---|
+| Conn ID | grpc_default | ID used to reference the connection in your Airflow DAG (e.g., in `src/airflow/dags/ping_grpc.py`).  |
+| Conn Type | GPRC Connection | Type of connection (specific to gRPC). |
+| Host | executor | gRPC server host. In this case, it uses the `executor` service within `docker-compose.yml` to proxy requests from Docker containers to the actual server host. For production setups, consider using a DNS name or an IP address. |
+| Port | 3170 | Port on which the gRPC server listens. |
+| Extra | {"extra__grpc__auth_type": "NO_AUTH"} | Extra configuration for the gRPC connection. Here, it specifies `NO_AUTH` to create an insecure channel over HTTP. **Warning:** This is not recommended for production environments as it lacks encryption. |
+| Grpc Auth Type | NO_AUTH | Authentication type used for the gRPC connection. In this case, it's set to `NO_AUTH`, corresponding to the insecure channel created in the `Extra` field. **Warning:** Consider using a secure authentication method for production setups (e.g., TLS with client certificates). |
+
 
 
