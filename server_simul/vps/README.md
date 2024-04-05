@@ -19,7 +19,10 @@ or pull it directly from my docker hub
 ```
 docker image pull j3r3my0612/py_executor:1.03
 ```
+## Datawarehouse
+The compose only contains container and it does not autometically generate a database inside postgres. After successfully creating the compose, please make connection to postgres via tools such as: Azure Data Studio or Datagrip to easily run [DDL](tasks\sql_script\ddl.sql) and [DML](tasks\sql_script\dml.sql) scripts. 
 
+I will update a new container for postgres which already has constructed database in the near future.🤣
 ## RPC communication 
 As mentioned, the airflow scheduler just managed the pipeline while the executor actually does the tasks. I used a simple protobuf to generate a gRPC conversation between scheduler & executor.
 ### Requirements
