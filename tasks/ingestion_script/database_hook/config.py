@@ -1,6 +1,9 @@
 from configparser import ConfigParser
+import os
+# Use definite path to avoid further traceback
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-def load_config(filename='database.ini', section='postgresql'):
+def load_config(filename=BASE_DIR+'/database.ini', section='postgresql'):
     parser = ConfigParser()
     parser.read(filename)
 

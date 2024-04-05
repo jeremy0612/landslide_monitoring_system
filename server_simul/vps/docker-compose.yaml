@@ -1,68 +1,82 @@
-version: '2.1'
+version: '3'
+
+x-airflow-env:
+  &airflow-env
+  AIRFLOW__CORE__EXECUTOR: LocalExecutor
+  # AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:123456@postgres:5432/landslide_warehouse
+  AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:123456@postgres:5432/landslide_warehouse
+  # AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://admin:123456@postgres/landslide_warehouse
+  POSTGRES_USER: admin
+  POSTGRES_PASSWORD: 123456
+  POSTGRES_DB: landslide_warehouse
+  AIRFLOW__CORE__FERNET_KEY: ZmDfcTF7_60GrrY167zsiPd67pEvs0aGOv2oasOM1Pg=
+
+x-airflow-volumes:
+  &airflow-volumes
+  - ../../dags:/opt/airflow/dags
+  - ../../data:/opt/airflow/data
+  - ../../tmp/airflow_logs:/opt/airflow/logs
+  - ../../tmp/buffer:/opt/airflow/buffer
+
+
 
 services:
+  # redis:
+  #   image: redis:latest
+  #   expose:
+  #     - 6379
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 5s
+  #     timeout: 30s
+  #     retries: 50
+  #   restart: always
+
   postgres:
     image: postgres:13
     environment:
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
+      POSTGRES_PASSWORD: 123456
       POSTGRES_DB: landslide_warehouse
     volumes:
-      - landslide_warehouse:/var/lib/postgresql/data
+      - ../../landslide_warehouse:/var/lib/postgresql/data
     ports:
-      - 2345:5432
-
-  webserver:
-    image: puckel/docker-airflow:1.10.4 
-    restart: always
-    depends_on:
-      - postgres
-    environment:
-      - LOAD_EX=n
-      - EXECUTOR=Local
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=123456
-      - POSTGRES_DB=landslide_warehouse
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://admin:123456@postgres:2345/landslide_warehouse
-    volumes:
-      - ../../tmp/airflow_logs:/root/airflow/logs
-      - ../../tasks:/usr/local/airflow/tasks
-      - ../../dags:/usr/local/airflow/dags
-      - ../../datasource:/usr/local/airflow/data
-    ports:
-      - '8080:8080'
-    command: webserver
-    healthcheck:
-      test: ['CMD-SHELL', '[ -f /usr/local/airflow/airflow-webserver.pid ]']
-      interval: 30s
-      timeout: 30s
-      retries: 3
+      - '2345:5432'
 
   scheduler:
-    image: puckel/docker-airflow:1.10.4 
-    restart: always
-    depends_on:
-      - postgres
-    environment:
-      - LOAD_EX=n
-      - EXECUTOR=Local
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=123456
-      - POSTGRES_DB=landslide_warehouse
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://admin:123456@postgres:2345/landslide_warehouse
-    volumes:
-      - ../../tmp/airflow_logs:/root/airflow/logs
-      - ../../tasks:/usr/local/airflow/tasks
-      - ../../dags:/usr/local/airflow/dags
-      - ../../datasource:/usr/local/airflow/data
+    build:
+      context: .
+    environment: *airflow-env
+    volumes: *airflow-volumes
+    depends_on: [  postgres ]
+    entrypoint: /bin/bash -c 'airflow initdb && airflow scheduler'
     command: scheduler
+    restart: on-failure
+  webserver:
+    build:
+      context: .
+    command: webserver
+    environment: *airflow-env
+    volumes: *airflow-volumes
+    depends_on: [ postgres, scheduler ]
+    restart: on-failure
+    ports:
+      - "8080:8080"
+  # worker:
+  #   build:
+  #     context: .  # Assuming your worker code is in the same context as scheduler and webserver
+  #   environment: *airflow-env
+  #   volumes: *airflow-volumes
+  #   depends_on: [ postgres ]  # Worker needs to depend on postgres database
+  #   command: airflow worker   
+  #   restart: on-failure
+
   executor:
-    image: py_executor:1.02
+    image: py_executor:1.04
     volumes:
-      - ../../datasource:/app/data
+      - ../../data:/app/data
       - ../../tasks:/app/tasks
       - ../../tmp/buffer:/app/buffer
+      - ../../tmp/executor_logs:/app/logs
     tty: true
-    command: bash
-volumes:
-  landslide_warehouse:
+    # command: /bin/bash -c "python /app/tasks/serve.py"

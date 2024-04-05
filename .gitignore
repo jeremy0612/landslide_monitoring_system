@@ -1,6 +1,15 @@
 document/related_research
-document/proposal/*.bkp
+/*.bkp
 document/proposal/*.pdf
 server_simul/raspi/certs
 datasource/Landslides.csv
 datasource/Global_Landslide_Data.xlsx
+.idea
+/*.ini
+/*.sqlite
+/__pycache__/
+tmp/airflow_logs/*
+tmp/buffer/*
+/*.pyc
+/*rar
+/mlruns
