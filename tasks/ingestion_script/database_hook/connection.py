@@ -31,7 +31,11 @@ class PostgreSQLConnection:
             return
         try:
             cursor = self.conn.cursor()
-            cursor.execute(query)
+            try:
+                cursor.execute(query)
+            except:
+                print(query)
+                return False
             if query.strip().upper().startswith('SELECT'):
                 rows = cursor.fetchall()
                 for row in rows:
@@ -43,4 +47,5 @@ class PostgreSQLConnection:
             cursor.close()
         except (psycopg2.DatabaseError, Exception) as error:
             print(error)
+        return True
     

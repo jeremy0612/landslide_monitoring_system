@@ -7,5 +7,9 @@ datasource/Global_Landslide_Data.xlsx
 .idea
 /*.ini
 /*.sqlite
-__pycache__/
+/__pycache__/
 tmp/airflow_logs/*
+tmp/buffer/*
+/*.pyc
+/*rar
+/mlruns

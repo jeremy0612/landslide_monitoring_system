@@ -50,12 +50,13 @@ class Server(PingServiceServicer):
                 subprocess.run(['conda', 'run', '-n', 'landslide_ingestion', 'python', '/app/tasks/ingestion_script/crawling.py', '--source', 'xlsx'], check=True, stdout=log_file, stderr=subprocess.STDOUT)
             result = {'message': 'crawling xlsx'}
         elif request.command == 'import_csv':
-            # self.import_csv_thread.start()
-            subprocess.run(['touch', "/app/buffer/import_csv.json"])
+            with open('/app/logs/importer_logs.log', 'a') as log_file:
+                # self.import_csv_thread.start()
+                subprocess.run(['conda', 'run', '-n', 'landslide_ingestion', 'python', '/app/tasks/ingestion_script/importing.py','--source', 'csv'], check=True, stdout=log_file, stderr=subprocess.STDOUT)
             result = {'message': 'importing csv'}
         elif request.command == 'import_xlsx':
-            # self.import_xlsx_thread.start()
-            subprocess.run(['touch',"/app/buffer/import_xlsx.json"])
+            with open('/app/logs/importer_logs.log', 'a') as log_file:
+                subprocess.run(['conda', 'run', '-n', 'landslide_ingestion', 'python', '/app/tasks/ingestion_script/importing.py', '--source', 'xlsx'], check=True, stdout=log_file, stderr=subprocess.STDOUT)
             result = {'message': 'importing xlsx'}
         return ExeResult(**result)
         

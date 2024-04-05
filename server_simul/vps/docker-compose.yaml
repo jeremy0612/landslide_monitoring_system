@@ -39,7 +39,7 @@ services:
       POSTGRES_PASSWORD: 123456
       POSTGRES_DB: landslide_warehouse
     volumes:
-      - landslide_warehouse:/var/lib/postgresql/data
+      - ../../landslide_warehouse:/var/lib/postgresql/data
     ports:
       - '2345:5432'
 
@@ -80,5 +80,3 @@ services:
       - ../../tmp/executor_logs:/app/logs
     tty: true
     # command: /bin/bash -c "python /app/tasks/serve.py"
-volumes:
-  landslide_warehouse:

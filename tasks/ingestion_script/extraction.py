@@ -6,8 +6,8 @@ parser.add_argument('--source', type=str, default='csv', help='Source of the dat
 args = parser.parse_args()
 
 # Data paths
-csv_file_path = "/app/data/dev_sample.csv"
-excel_file_path = "/app/data/dev_sample.xlsx"
+csv_file_path = "/app/data/test_sample.csv"
+excel_file_path = "/app/data/test_sample.xlsx"
 
 # Select the columns you need
 selected_columns = ["id","date", "time", "country", "near", "continentcode",

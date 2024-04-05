@@ -18,13 +18,19 @@ class Crawler:
 
     def fetch_weather_data(self, params):
         url = "https://archive-api.open-meteo.com/v1/archive"
-        params = {
-            "latitude": params['latitude'],
-            "longitude": params['longitude'],
-            "start_date": params['start_date'],
-            "end_date": params['end_date'],
-            "hourly": self.hourly_variables
-        }
+        try:
+            params = {
+                "latitude": params['latitude'],
+                "longitude": params['longitude'],
+                "start_date": params['start_date'],
+                "end_date": params['end_date'],
+                "hourly": self.hourly_variables
+            }
+        except:
+            params = {
+                "latitude": params['latitude'],
+                "longitude": params['longitude']
+            }
         responses = self.openmeteo.weather_api(url, params=params)
         return responses[0]  # Handling only the first location
 
@@ -52,8 +58,7 @@ class Crawler:
     def fetch_data(self,params):
         hourly_dataframe = self.process_response(self.fetch_weather_data(params=params))
         return hourly_dataframe
-        # TODO: fetch data from OpenMeteo
-
+    
 if __name__ == "__main__":
     crawler = Crawler()
     try:
@@ -74,8 +79,11 @@ if __name__ == "__main__":
             # print(info)
             response = crawler.fetch_data(info)
             if isinstance(response, pd.DataFrame):
+                df = pd.DataFrame([line])
+                new_row = df.loc[0].copy()
+                df = df._append([new_row]*23, ignore_index=True)
                 # Combine information with response DataFrame efficiently
-                combined_df = pd.concat([pd.DataFrame([line]), response], axis=1)
+                combined_df = pd.concat([df, response.rename(columns={'date': 'datetime'})], axis=1)
                 # Handle potential column name conflicts:
                 if any(col in combined_df.columns for col in info.keys()):
                     combined_df.columns = [f'{col}_info' if col in info.keys() else col for col in combined_df.columns]
