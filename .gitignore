@@ -10,7 +10,6 @@ datasource/Global_Landslide_Data.xlsx
 /__pycache__/
 tmp/airflow_logs/*
 tmp/buffer/*
-/*.pyc
 *.pyc
 /*rar
 /mlruns
