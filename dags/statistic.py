@@ -13,4 +13,5 @@ with DAG (
         task_id='spark_submit',
         application='/opt/airflow/dags/spark_job/sample.py',
         conn_id='spark_default',
+        jars='/opt/airflow/dags/spark_job/postgresql-42.3.9.jar',
     )
