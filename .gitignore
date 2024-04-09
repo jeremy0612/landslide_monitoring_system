@@ -1,15 +1,23 @@
+# Ignore reports & documents
 document/related_research
-/*.bkp
 document/proposal/*.pdf
+# Ignore raspberry pi certificates
 server_simul/raspi/certs
+# Ignore datasources
 datasource/Landslides.csv
 datasource/Global_Landslide_Data.xlsx
-.idea
+# Ignore extra files
+/*.bkp
+/.idea
 /*.ini
 /*.sqlite
 /__pycache__/
-tmp/airflow_logs/*
-tmp/buffer/*
 /*.pyc
 /*rar
+# Ignore log file 
+tmp/airflow_logs/*
+tmp/buffer/*
+
 /mlruns
+# Ignore datawarehouse
+/landslide_warehouse
