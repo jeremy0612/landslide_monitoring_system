@@ -1,4 +1,8 @@
 version: '3'
+# =============== This version of airflow might be too old as it is version 1 airflow ===============
+#                    Please use the latest version of Airflow 
+#                   or change to the oldedr if you only need ingestion pipeline 
+# ===================================================================================================
 
 # x-airflow-env:
 #   &airflow-env
@@ -17,13 +21,15 @@ version: '3'
 #   - ../../data:/opt/airflow/data
 #   - ../../tmp/airflow_logs:/opt/airflow/logs
 #   - ../../tmp/buffer:/opt/airflow/buffer
+
 x-airflow-common:
   &airflow-common
   # In order to add custom dependencies or upgrade provider packages you can use your extended image.
   # Comment the image line, place your Dockerfile in the directory where you placed the docker-compose.yaml
   # and uncomment the "build" line below, Then run `docker-compose build` to build the images.
-  image: airfloww:1.0.1
-  # build: .
+  image: airfloww:1.0.2
+  # build: 
+  #   dockerfile: ./airfloww/Dockerfile.airfloww.1.0.1
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
@@ -39,7 +45,7 @@ x-airflow-common:
   volumes:
     - ../../dags:/opt/airflow/dags
     - ../../data:/opt/airflow/data
-    - ../../plugins:/opt/airflow/plugins
+    # - ../../plugins:/opt/airflow/plugins
     - ../../tmp/airflow_logs:/opt/airflow/logs
     - ../../tmp/buffer:/opt/airflow/buffer
   user: "${AIRFLOW_UID:-50000}:0"
@@ -50,6 +56,7 @@ x-airflow-common:
 
 
 services:
+  # Comment the redis service since the redis is not needed for the ingestion pipeline and ver1 airflow for local executor 
   redis:
     image: redis:latest
     expose:
@@ -61,7 +68,8 @@ services:
       retries: 50
     restart: always
   postgres:
-    image: postgres:13
+    image: postgress:1.0.1
+    # build: ./postgress/Dockerfile.postgress.1.0.1
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: 123456
@@ -71,13 +79,13 @@ services:
     ports:
       - '2345:5432'
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "airflow"]
+      test: ["CMD", "pg_isready", "-U", "admin", "-d", "landslide_warehouse"]
       interval: 5s
-      retries: 5
-
+      retries: 10
+  # Uncomment the scheduler service if you change to ver1 airflow
   # scheduler:
   #   build:
-  #     context: .
+  #     dockerfile: ./airfloww/Dockerfile.airfloww.1.0.0
   #   environment: *airflow-env
   #   volumes: *airflow-volumes
   #   depends_on: [  postgres ]
@@ -86,7 +94,7 @@ services:
   #   restart: on-failure
   # webserver:
   #   build:
-  #     context: .
+  #     dockerfile: ./airfloww/Dockerfile.airfloww.1.0.0
   #   command: webserver
   #   environment: *airflow-env
   #   volumes: *airflow-volumes
@@ -141,16 +149,18 @@ services:
 
   executor:
     image: py_executor:1.04
+    # build: ./py_executor/Dockerfile.py_executor.1.04
     volumes:
       - ../../data:/app/data
       - ../../tasks:/app/tasks
       - ../../tmp/buffer:/app/buffer
       - ../../tmp/executor_logs:/app/logs
     tty: true
-    # command: /bin/bash -c "python /app/tasks/serve.py"
+    command: /bin/bash -c "python /app/tasks/serve.py"
 
   spark-master:
-    image: bitnami/spark:3.4.1
+    image: sparkk:1.0.1
+    # build: ./sparkk/Dockerfile.sparkk.1.0.1
     user: root
     hostname: spark
     environment:
@@ -158,17 +168,32 @@ services:
     ports:
       - "8181:8080"
       - "9999:9999"
+      - "5005:5005"
     volumes:
       - ../../dags/spark_job:/usr/local/share/spark/   
+      - ../../tmp/spark_logs:/opt/bitnami/spark/logs
+      - ../../tmp/buffer:/usr/local/share/buffer
+      - ../../dags/spark_job/mlruns:/opt/bitnami/spark/mlruns
+      - ../../dags/spark_job/mlartifacts:/opt/bitnami/spark/mlartifacts
 
   spark-worker:
-    image: bitnami/spark:3.4.1
+    image: sparkk:1.0.1
+    # build: ./sparkk/Dockerfile.sparkk.1.0.1
     user: root
     environment:
       SPARK_MODE: worker
       SPARK_MASTER_URL: spark://spark:7077
       SPARK_WORKER_MEMORY: 1G
-      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_CORES: 1
+  spark-workerr:
+    image: sparkk:1.0.1
+    # build: ./sparkk/Dockerfile.sparkk.1.0.1
+    user: root
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark:7077
+      SPARK_WORKER_MEMORY: 1G
+      SPARK_WORKER_CORES: 1
 
   airflow-init:
     <<: *airflow-common
