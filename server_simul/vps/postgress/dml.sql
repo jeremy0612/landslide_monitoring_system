@@ -71,34 +71,3 @@ EXECUTE PROCEDURE copy_updated_data();
 
 
 
-
-INSERT INTO Event (
-    hazard_type,
-    landslide_type,
-    size,
-    date,
-    time,
-    timezone,
-    month,
-    year,
-    country,
-    near,
-    continent,
-    longitude,
-    latitude
-)
-VALUES (
-           'Rockfall',  -- Replace with hazard type (optional)
-           'Debris flow',  -- Replace with landslide type (optional)
-           'Small',  -- Replace with size category (optional)
-           '2024-03-18',  -- Replace with actual date
-           '14:30:00',  -- Replace with actual time (optional)
-           'UTC',  -- Replace with timezone
-           3,  -- Month (March)
-           2024,  -- Year
-           'Vietnam',  -- Replace with country (optional)
-           'ang',  -- Replace with nearby location (optional)
-           'AS',  -- Continent code (optional)
-           108.33,  -- Replace with actual longitude
-           16.06 -- Replace with actual latitude
-       );

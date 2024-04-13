@@ -108,9 +108,3 @@ CREATE TABLE Data (
 )
 
 
-
--- ===== Sample insertion ===== --
-insert into Location(country, near, continent, longitude, latitude) values
-('Vietnam', 'Hanoi','AS', 105.8461, 21.0245),
-('Vietnam', 'Hue', 'EU',107.6050, 16.4667)
-

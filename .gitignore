@@ -11,8 +11,8 @@ datasource/Global_Landslide_Data.xlsx
 /.idea
 /*.ini
 /*.sqlite
-/__pycache__/
-/*.pyc
+/__pycache__/*
+*.pyc
 /*rar
 # Ignore log file 
 tmp/airflow_logs/*
