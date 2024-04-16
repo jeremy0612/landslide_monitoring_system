@@ -45,7 +45,7 @@ x-airflow-common:
   volumes:
     - ../../dags:/opt/airflow/dags
     - ../../data:/opt/airflow/data
-    # - ../../plugins:/opt/airflow/plugins
+    - ../../plugins:/opt/airflow/plugins
     - ../../tmp/airflow_logs:/opt/airflow/logs
     - ../../tmp/buffer:/opt/airflow/buffer
   user: "${AIRFLOW_UID:-50000}:0"
@@ -69,7 +69,8 @@ services:
     restart: always
   postgres:
     image: postgress:1.0.1
-    # build: ./postgress/Dockerfile.postgress.1.0.1
+    # build: 
+    #   dockerfile: ./postgress/Dockerfile.postgress.1.0.1
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: 123456
@@ -149,7 +150,9 @@ services:
 
   executor:
     image: py_executor:1.04
-    # build: ./py_executor/Dockerfile.py_executor.1.04
+    # build: 
+    #   context: ./py_executor
+    #   dockerfile: Dockerfile.py_executor.1.04
     volumes:
       - ../../data:/app/data
       - ../../tasks:/app/tasks
@@ -160,7 +163,9 @@ services:
 
   spark-master:
     image: sparkk:1.0.1
-    # build: ./sparkk/Dockerfile.sparkk.1.0.1
+    # build: 
+    #   context: ./sparkk
+    #   dockerfile: Dockerfile.sparkk.1.0.1
     user: root
     hostname: spark
     environment:
@@ -178,7 +183,9 @@ services:
 
   spark-worker:
     image: sparkk:1.0.1
-    # build: ./sparkk/Dockerfile.sparkk.1.0.1
+    # build: 
+    #   context: ./sparkk
+    #   dockerfile: Dockerfile.sparkk.1.0.1
     user: root
     environment:
       SPARK_MODE: worker
@@ -187,7 +194,9 @@ services:
       SPARK_WORKER_CORES: 1
   spark-workerr:
     image: sparkk:1.0.1
-    # build: ./sparkk/Dockerfile.sparkk.1.0.1
+    # build: 
+    #   context: ./sparkk
+    #   dockerfile: Dockerfile.sparkk.1.0.1
     user: root
     environment:
       SPARK_MODE: worker
