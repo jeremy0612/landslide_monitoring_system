@@ -18,6 +18,9 @@ datasource/Global_Landslide_Data.xlsx
 tmp/airflow_logs/*
 tmp/buffer/*
 
-/mlruns
+
 # Ignore datawarehouse
 /landslide_warehouse
+# Ignore mlflow path
+/mlruns/
+/mlartifacts/

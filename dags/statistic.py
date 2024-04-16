@@ -1,6 +1,12 @@
 from airflow import DAG
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
+from airflow.contrib.operators.spark_submit_operator import SparkSubmitOperator as SparkSubmitOperator2
 
+class SparkSubmitOperatorXCom(SparkSubmitOperator2):
+    def execute(self, context):
+        super().execute(context)
+        return self._hook._driver_status
+    
 from datetime import datetime
 
 with DAG (
@@ -14,6 +20,14 @@ with DAG (
         application='/opt/airflow/dags/spark_job/sample.py',
         conn_id='spark_default',
         jars='/opt/airflow/dags/spark_job/postgresql-42.3.9.jar'
+    )
+
+    spark_xcom = SparkSubmitOperatorXCom(
+        task_id='spark_xcom',
+        application='/opt/airflow/dags/spark_job/sample.py',
+        conn_id='spark_default',
+        jars='/opt/airflow/dags/spark_job/postgresql-42.3.9.jar',
+        do_xcom_push=True
     )
 
     spark_model = SparkSubmitOperator(
