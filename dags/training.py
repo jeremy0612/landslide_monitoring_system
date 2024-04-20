@@ -120,7 +120,7 @@ def training():
             ]
             >> experiment_id
         )
-    train = SparkSubmitOperator(
+    train_region_1 = SparkSubmitOperator(
         task_id='trainer_region_1',
         application='/opt/airflow/dags/spark_job/model_trainer.py',
         conn_id='spark_default',
@@ -131,20 +131,20 @@ def training():
             "--model_name", "detector_region_1",
         ]
     )
-    check_current_run_id = FileSensor(
-        task_id="check_current_run_id",
+    check_current_run_id_1 = FileSensor(
+        task_id="check_current_run_id_1",
         filepath='/opt/airflow/buffer/mlflow/detector_region_1.txt',
-        poke_interval=10,
+        poke_interval=15,
         timeout=100
     )
     @task
-    def get_run_id():
+    def get_run_id_region_1():
         with open('/opt/airflow/buffer/mlflow/detector_region_1.txt', 'r') as f:
             run_id = f.read()
         return run_id
     
     @task_group
-    def register_model():
+    def register_model_region_1():
         @task.branch
         def check_if_model_already_registered(reg_model_name):
             "Get information about existing registered MLFlow models."
@@ -166,9 +166,9 @@ def training():
                 reg_model_exists = True
 
             if reg_model_exists:
-                return "register_model.model_already_registered"
+                return "register_model_region_1.model_already_registered"
             else:
-                return "register_model.create_registered_model"
+                return "register_model_region_1.create_registered_model"
 
         model_already_registered = EmptyOperator(task_id="model_already_registered")
 
@@ -184,15 +184,15 @@ def training():
         create_model_version = CreateModelVersionOperator(
             task_id="create_model_version",
             name="detector_region_1",
-            source="/opt/airflow/dags/spark_job/mlartifacts/{{ ti.xcom_pull(task_ids='get_run_id') }}/artifacts/model",
-            run_id="{{ ti.xcom_pull(task_ids='get_run_id') }}",
+            source="/opt/airflow/dags/spark_job/mlartifacts/{{ ti.xcom_pull(task_ids='get_run_id_region_1') }}/artifacts/model",
+            run_id="{{ ti.xcom_pull(task_ids='get_run_id_region_1') }}",
             trigger_rule="none_failed",
         )
 
         transition_model = TransitionModelVersionStageOperator(
             task_id="transition_model",
             name="detector_region_1",
-            version="{{ ti.xcom_pull(task_ids='register_model.create_model_version')['model_version']['version'] }}",
+            version="{{ ti.xcom_pull(task_ids='register_model_region_1.create_model_version')['model_version']['version'] }}",
             stage="Staging",
             archive_existing_versions=True,
         )
@@ -204,7 +204,93 @@ def training():
             >> transition_model
         )
 
+    train_region_2 = SparkSubmitOperator(
+        task_id='trainer_region_2',
+        application='/opt/airflow/dags/spark_job/model_trainer.py',
+        conn_id='spark_default',
+        jars='/opt/airflow/dags/spark_job/postgresql-42.3.9.jar',
+        application_args=[
+            "--experiment_name", EXPERIMENT_NAME,
+            "--experiment_id", "{{ task_instance.xcom_pull(task_ids='prepare_mlflow_experiment.get_current_experiment_id', key='return_value') }}",
+            "--model_name", "detector_region_2",
+        ]
+    )
+    check_current_run_id_2 = FileSensor(
+        task_id="check_current_run_id_2",
+        filepath='/opt/airflow/buffer/mlflow/detector_region_2.txt',
+        poke_interval=15,
+        timeout=100
+    )
+    @task
+    def get_run_id_region_2():
+        with open('/opt/airflow/buffer/mlflow/detector_region_2.txt', 'r') as f:
+            run_id = f.read()
+        return run_id
+    
+    @task_group
+    def register_model_region_2():
+        @task.branch
+        def check_if_model_already_registered(reg_model_name):
+            "Get information about existing registered MLFlow models."
 
-    start >> prepare_mlflow_experiment() >> train >> check_current_run_id >> get_run_id() >> register_model() >> end
+            mlflow_hook = MLflowClientHook(mlflow_conn_id=MLFLOW_CONN_ID, method="GET")
+            get_reg_model_response = mlflow_hook.run(
+                endpoint="api/2.0/mlflow/registered-models/get",
+                request_params={"name": reg_model_name},
+            ).json()
+
+            if "error_code" in get_reg_model_response:
+                if get_reg_model_response["error_code"] == "RESOURCE_DOES_NOT_EXIST":
+                    reg_model_exists = False
+                else:
+                    raise ValueError(
+                        f"Error when checking if model is registered: {get_reg_model_response['error_code']}"
+                    )
+            else:
+                reg_model_exists = True
+
+            if reg_model_exists:
+                return "register_model_region_2.model_already_registered"
+            else:
+                return "register_model_region_2.create_registered_model"
+
+        model_already_registered = EmptyOperator(task_id="model_already_registered")
+
+        create_registered_model = CreateRegisteredModelOperator(
+            task_id="create_registered_model",
+            name="detector_region_2",
+            tags=[
+                {"key": "model_type", "value": "regression"},
+                {"key": "data", "value": "landslide"},
+            ],
+        )
+
+        create_model_version = CreateModelVersionOperator(
+            task_id="create_model_version",
+            name="detector_region_2",
+            source="/opt/airflow/dags/spark_job/mlartifacts/{{ ti.xcom_pull(task_ids='get_run_id_region_2') }}/artifacts/model",
+            run_id="{{ ti.xcom_pull(task_ids='get_run_id_region_2') }}",
+            trigger_rule="none_failed",
+        )
+
+        transition_model = TransitionModelVersionStageOperator(
+            task_id="transition_model",
+            name="detector_region_2",
+            version="{{ ti.xcom_pull(task_ids='register_model_region_2.create_model_version')['model_version']['version'] }}",
+            stage="Staging",
+            archive_existing_versions=True,
+        )
+
+        (
+            check_if_model_already_registered(reg_model_name="detector_region_2")
+            >> [model_already_registered, create_registered_model]
+            >> create_model_version
+            >> transition_model
+        )
+
+
+    start >> prepare_mlflow_experiment() >> [train_region_1, train_region_2]
+    train_region_1 >> check_current_run_id_1 >> get_run_id_region_1() >> register_model_region_1() >> end
+    train_region_2 >> check_current_run_id_2 >> get_run_id_region_2() >> register_model_region_2() >> end
 
 training()
