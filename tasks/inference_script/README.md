@@ -1,0 +1,2 @@
+Since the inference pipeline reuse crawling task from ingestion pipeline, we have a subcriber for reading outline points from MQTT broker. 
+An exactly the same `certs` folder as the one needed for raspi is required here in this folder.
