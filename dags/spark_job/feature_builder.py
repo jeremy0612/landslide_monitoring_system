@@ -2,7 +2,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col,  when, lit, collect_list, udf, max
 from pyspark.ml.linalg import Vectors, VectorUDT
 
-def build_feature(soil_df, weather_data_df, datetime_df, landslide_event_df): 
+def build_training_feature(soil_df, weather_data_df, datetime_df, landslide_event_df): 
     soil_df = soil_df.withColumn("soil_temp_0_to_7", 
                              when(col("depth") == lit("0 to 7 cm"), col("temperature").cast("float"))
                              .otherwise(lit(0)))\
@@ -123,6 +123,50 @@ def build_feature(soil_df, weather_data_df, datetime_df, landslide_event_df):
     # merged_df.show(48)
     # merged_df.printSchema()
 
+def build_predicting_feature(prepared_df):
+    group_df = prepared_df.groupBy('Index')\
+                .agg(collect_list('temperature_2m') \
+                    .alias("features_temperature"),\
+                        collect_list('rain') \
+                    .alias("features_rain"),\
+                        collect_list('precipitation') \
+                    .alias("features_precipitation"),\
+                        collect_list('relative_humidity_2m') \
+                    .alias("features_relative_humidity"),\
+                        collect_list('soil_temperature_0_to_7cm') \
+                    .alias("features_soil_temp_0_to_7"),\
+                        collect_list('soil_temperature_7_to_28cm') \
+                    .alias("features_soil_temp_7_to_28"),\
+                        collect_list('soil_temperature_28_to_100cm') \
+                    .alias("features_soil_temp_28_to_100"),\
+                        collect_list('soil_temperature_100_to_255cm') \
+                    .alias("features_soil_temp_100_to_255"),\
+                        collect_list('soil_moisture_0_to_7cm') \
+                    .alias("features_soil_moisture_0_to_7"),\
+                        collect_list('soil_moisture_7_to_28cm') \
+                    .alias("features_soil_moisture_7_to_28"),\
+                        collect_list('soil_moisture_28_to_100cm') \
+                    .alias("features_soil_moisture_28_to_100"),\
+                        collect_list('soil_moisture_100_to_255cm') \
+                    .alias("features_soil_moisture_100_to_255"))
+
+    list_to_vector_udf = udf(lambda l: Vectors.dense(l), VectorUDT())
+    merged_df = group_df.withColumn("features_temperature", list_to_vector_udf(group_df["features_temperature"]))\
+                        .withColumn("features_rain", list_to_vector_udf(group_df["features_rain"]))\
+                        .withColumn("features_precipitation", list_to_vector_udf(group_df["features_precipitation"]))\
+                        .withColumn("features_relative_humidity", list_to_vector_udf(group_df["features_relative_humidity"]))\
+                        .withColumn("features_soil_temp_0_to_7", list_to_vector_udf(group_df["features_soil_temp_0_to_7"]))\
+                        .withColumn("features_soil_temp_7_to_28", list_to_vector_udf(group_df["features_soil_temp_7_to_28"]))\
+                        .withColumn("features_soil_temp_28_to_100", list_to_vector_udf(group_df["features_soil_temp_28_to_100"]))\
+                        .withColumn("features_soil_temp_100_to_255", list_to_vector_udf(group_df["features_soil_temp_100_to_255"]))\
+                        .withColumn("features_soil_moisture_0_to_7", list_to_vector_udf(group_df["features_soil_moisture_0_to_7"]))\
+                        .withColumn("features_soil_moisture_7_to_28", list_to_vector_udf(group_df["features_soil_moisture_7_to_28"]))\
+                        .withColumn("features_soil_moisture_28_to_100", list_to_vector_udf(group_df["features_soil_moisture_28_to_100"]))\
+                        .withColumn("features_soil_moisture_100_to_255", list_to_vector_udf(group_df["features_soil_moisture_100_to_255"]))
+
+    return merged_df
+    
+
 if __name__ == "__main__":
     # Initialize the spark job
     spark = SparkSession \
@@ -165,13 +209,14 @@ if __name__ == "__main__":
         .option("password", "123456")\
         .load()
 
-    merged_df = build_feature(soil_df, weather_data_df, datetime_df, landslide_event_df)
+    merged_df = build_training_feature(soil_df, weather_data_df, datetime_df, landslide_event_df)
 
     # landslide_df = merged_df.where(col("landslide_type").isNotNull())
     # normal_df = merged_df.where(col("landslide_type").isNull())
 
     # landslide_df.show(48)
     # normal_df.show(48)
-    merged_df.show(72)
+    # merged_df.show(72)
     merged_df.printSchema()
+    # merged_df.write.csv("../buffer/message_broker/sample_feature.csv",header=True)
     spark.stop()

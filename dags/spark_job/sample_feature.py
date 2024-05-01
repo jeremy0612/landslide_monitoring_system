@@ -1,6 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, array, explode, split
-import json 
+from pyspark.sql.functions import col,  when, lit
 
 if __name__ == "__main__":
     # Initialize the spark job
@@ -43,31 +42,56 @@ if __name__ == "__main__":
         .option("user", "admin")\
         .option("password", "123456")\
         .load()
+    
+    soil_df = soil_df.withColumn("soil_temp_0_to_7", 
+                             when(col("depth") == lit("0 to 7 cm"), col("temperature").cast("float"))
+                             .otherwise(lit(0)))\
+                    .withColumn("soil_temp_7_to_28",
+                             when(col("depth") == lit("7 to 28 cm"), col("temperature").cast("float"))
+                             .otherwise(lit(0)))\
+                    .withColumn("soil_temp_28_to_100",
+                             when(col("depth") == lit("28 to 100 cm"), col("temperature").cast("float"))
+                             .otherwise(lit(0)))\
+                    .withColumn("soil_temp_100_255",
+                             when(col("depth") == lit("100 to 255 cm"), col("temperature").cast("float"))
+                             .otherwise(lit(0)))
 
-
-    # Load weather and soil data together (inner join)
-    data2_df = weather_data_df.join(soil_df, \
+    soil_df = soil_df.withColumn("soil_moisture_0_to_7",
+                             when(col("depth") == lit("0 to 7 cm"), col("moisture").cast("float"))
+                             .otherwise(lit(0)))\
+                    .withColumn("soil_moisture_7_to_28",
+                             when(col("depth") == lit("7 to 28 cm"), col("moisture").cast("float"))
+                             .otherwise(lit(0)))\
+                    .withColumn("soil_moisture_28_to_100",
+                             when(col("depth") == lit("28 to 100 cm"), col("moisture").cast("float"))
+                             .otherwise(lit(0)))\
+                    .withColumn("soil_moisture_100_255",
+                             when(col("depth") == lit("100 to 255 cm"), col("moisture").cast("float"))
+                             .otherwise(lit(0)))    
+    soil_df = soil_df.select(col("weather_data_id"),\
+                            col("soil_temp_0_to_7"), col("soil_temp_7_to_28"), col("soil_temp_28_to_100"), col("soil_temp_100_255"),\
+                            col("soil_moisture_0_to_7"), col("soil_moisture_7_to_28"), col("soil_moisture_28_to_100"),col("soil_moisture_100_255"))
+    soil_df = soil_df.groupby('weather_data_id')\
+                    .agg({'soil_temp_0_to_7': 'max', 'soil_temp_7_to_28': 'max', 'soil_temp_28_to_100': 'max', 'soil_temp_100_255': 'max',\
+                          'soil_moisture_0_to_7': 'max', 'soil_moisture_7_to_28': 'max', 'soil_moisture_28_to_100': 'max', 'soil_moisture_100_255': 'max'})\
+                    .orderBy('weather_data_id')
+    soil_df = soil_df.withColumnRenamed('max(soil_temp_0_to_7)', 'soil_temp_0_to_7')\
+                    .withColumnRenamed('max(soil_temp_7_to_28)', 'soil_temp_7_to_28')\
+                    .withColumnRenamed('max(soil_temp_28_to_100)', 'soil_temp_28_to_100')\
+                    .withColumnRenamed('max(soil_temp_100_255)', 'soil_temp_100_255')\
+                    .withColumnRenamed('max(soil_moisture_0_to_7)', 'soil_moisture_0_to_7')\
+                    .withColumnRenamed('max(soil_moisture_7_to_28)', 'soil_moisture_7_to_28')\
+                    .withColumnRenamed('max(soil_moisture_28_to_100)', 'soil_moisture_28_to_100')\
+                    .withColumnRenamed('max(soil_moisture_100_255)', 'soil_moisture_100_255')
+    
+    data_df = weather_data_df.join(soil_df, \
                                     on=[soil_df['weather_data_id']==weather_data_df['fact_id']],\
                                     how='inner')\
-                                .withColumn('temp_range', explode('depth'))\
-                                .withColumn('soil_temp', soil_df['temperature'])\
-                                .withColumn('soil_moisture', soil_df['moisture'])\
-                                .sort('fact_id','depth')
-    # Split depth into an array (assuming the depth is separated by spaces)
-    data2_df = data2_df.withColumn("depth_array", split(col("depth"), " "))
-
-    # Split and process depth data using explode and regexp_extract (option 2)
-    processed_df = data2_df.withColumn(
-        "depth_exploded", explode(array([col("depth_array")]))
-    )
-    # Extract temperature, moisture, depth_start, and depth_end
-    processed_df = processed_df.withColumn("depth_start", col("temp_range").getItem(0)) \
-                                .withColumn("depth_end", col("temp_range").getItem(2))
-    processed_df.show()
-
-    data_df = weather_data_df.join(datetime_df, on='datetime_id', how='inner')\
-                            .select('location_id', 'date','month','year', 'temperature', 'rain',\
-                                    'precipitation','relative_humidity', 'time')    
+                                    .select('fact_id','location_id','datetime_id','temperature','precipitation','rain','relative_humidity',\
+                                            'soil_temp_0_to_7','soil_temp_7_to_28','soil_temp_28_to_100','soil_temp_100_255',\
+                                            'soil_moisture_0_to_7','soil_moisture_7_to_28','soil_moisture_28_to_100','soil_moisture_100_255')
+    
+    data_df = data_df.join(datetime_df, on='datetime_id', how='inner')
     event_df = landslide_event_df.join(datetime_df, on='datetime_id', how='inner')\
                                 .select(col('event_id'), col('landslide_type'), \
                                          col('size'), col('location_id'),col('date'),col('month'),col('year'))
@@ -82,9 +106,12 @@ if __name__ == "__main__":
     
     merged_df = merged_df.select('event_id', 'landslide_type', 'size',\
                                  'time', event_df['location_id'],\
-                                 'temperature', 'rain', 'precipitation', 'relative_humidity')
+                                 'temperature', 'rain', 'precipitation', 'relative_humidity',\
+                                 'soil_temp_0_to_7','soil_temp_7_to_28','soil_temp_28_to_100','soil_temp_100_255',\
+                                 'soil_moisture_0_to_7','soil_moisture_7_to_28','soil_moisture_28_to_100','soil_moisture_100_255')
     merged_df = merged_df.dropDuplicates(subset=['location_id', 'time'])
 
+    # processed_df.show()
     merged_df.show(48)
     merged_df.printSchema()
 

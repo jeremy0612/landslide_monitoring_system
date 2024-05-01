@@ -42,12 +42,12 @@ class Server(PingServiceServicer):
         elif request.command == 'crawl_csv':
             # self.crawl_csv_thread.start()
             with open('/app/logs/crawler_logs.log', 'a') as log_file:
-                process = subprocess.run(['conda', 'run', '-n', 'landslide_ingestion', 'python', '/app/tasks/ingestion_script/crawling.py', '--source', 'csv'], check=True, stdout=log_file, stderr=subprocess.STDOUT)
+                process = subprocess.run(['conda', 'run', '-n', 'landslide_ingestion', 'python', '/app/tasks/ingestion_script/crawling.py','--mode','ingest', '--source', 'csv'], check=True, stdout=log_file, stderr=subprocess.STDOUT)
             result = {'message': 'crawling csv'}
         elif request.command == 'crawl_xlsx':
             # self.crawl_xlsx_thread.start()
             with open('/app/logs/crawler_logs.log', 'a') as log_file:
-                subprocess.run(['conda', 'run', '-n', 'landslide_ingestion', 'python', '/app/tasks/ingestion_script/crawling.py', '--source', 'xlsx'], check=True, stdout=log_file, stderr=subprocess.STDOUT)
+                subprocess.run(['conda', 'run', '-n', 'landslide_ingestion', 'python', '/app/tasks/ingestion_script/crawling.py','--mode','ingest', '--source', 'xlsx'], check=True, stdout=log_file, stderr=subprocess.STDOUT)
             result = {'message': 'crawling xlsx'}
         elif request.command == 'import_csv':
             with open('/app/logs/importer_logs.log', 'a') as log_file:
@@ -58,6 +58,11 @@ class Server(PingServiceServicer):
             with open('/app/logs/importer_logs.log', 'a') as log_file:
                 subprocess.run(['conda', 'run', '-n', 'landslide_ingestion', 'python', '/app/tasks/ingestion_script/importing.py', '--source', 'xlsx'], check=True, stdout=log_file, stderr=subprocess.STDOUT)
             result = {'message': 'importing xlsx'}
+        elif request.command == 'crawl_predict':
+            # self.crawl_xlsx_thread.start()
+            with open('/app/logs/crawler_logs.log', 'a') as log_file:
+                subprocess.run(['conda', 'run', '-n', 'landslide_ingestion', 'python', '/app/tasks/ingestion_script/crawling.py','--mode','predict'], check=True, stdout=log_file, stderr=subprocess.STDOUT)
+            result = {'message': 'crawling csv for predicting'}
         return ExeResult(**result)
         
     

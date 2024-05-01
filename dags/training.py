@@ -74,7 +74,7 @@ def training():
                 endpoint="api/2.0/mlflow/experiments/create",
                 request_params={
                     "name": experiment_name,
-                    "artifact_location": "/opt/airflow/dags/spark_job/mlartifacts",
+                    "artifact_location": "/mlartifacts",
                 },
             ).json()
 
@@ -184,7 +184,7 @@ def training():
         create_model_version = CreateModelVersionOperator(
             task_id="create_model_version",
             name="detector_region_1",
-            source="/opt/airflow/dags/spark_job/mlartifacts/{{ ti.xcom_pull(task_ids='get_run_id_region_1') }}/artifacts/model",
+            source="/mlartifacts/{{ ti.xcom_pull(task_ids='get_run_id_region_1') }}/artifacts/model",
             run_id="{{ ti.xcom_pull(task_ids='get_run_id_region_1') }}",
             trigger_rule="none_failed",
         )
@@ -268,7 +268,7 @@ def training():
         create_model_version = CreateModelVersionOperator(
             task_id="create_model_version",
             name="detector_region_2",
-            source="/opt/airflow/dags/spark_job/mlartifacts/{{ ti.xcom_pull(task_ids='get_run_id_region_2') }}/artifacts/model",
+            source="/mlartifacts/{{ ti.xcom_pull(task_ids='get_run_id_region_2') }}/artifacts/model",
             run_id="{{ ti.xcom_pull(task_ids='get_run_id_region_2') }}",
             trigger_rule="none_failed",
         )

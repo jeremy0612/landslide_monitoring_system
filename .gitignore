@@ -11,6 +11,7 @@ datasource/Global_Landslide_Data.xlsx
 /.idea
 /*.ini
 /*.sqlite
+/__pycache__/
 /__pycache__/*
 *.pyc
 /*rar

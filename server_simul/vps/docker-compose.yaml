@@ -48,6 +48,8 @@ x-airflow-common:
     - ../../plugins:/opt/airflow/plugins
     - ../../tmp/airflow_logs:/opt/airflow/logs
     - ../../tmp/buffer:/opt/airflow/buffer
+    - ../../mlruns:/mlruns
+    - ../../mlartifacts:/mlartifacts
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -178,8 +180,8 @@ services:
       - ../../dags/spark_job:/usr/local/share/spark/   
       - ../../tmp/spark_logs:/opt/bitnami/spark/logs
       - ../../tmp/buffer:/usr/local/share/buffer
-      - ../../dags/spark_job/mlruns:/opt/bitnami/spark/mlruns
-      - ../../dags/spark_job/mlartifacts:/opt/bitnami/spark/mlartifacts
+      - ../../mlruns:/mlruns
+      - ../../mlartifacts:/mlartifacts
 
   spark-worker:
     image: sparkk:1.0.1

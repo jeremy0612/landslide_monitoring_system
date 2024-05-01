@@ -50,9 +50,9 @@ def insert_data(row):
 if __name__ == '__main__':
     # Define the filename of the JSON file
     if args.source == 'csv':
-        file_path = "/app/buffer/metrics_csv.csv"
+        file_path = "/app/buffer/origin/metrics_csv.csv"
     else:
-        file_path = "/app/buffer/metrics_xlsx.csv"
+        file_path = "/app/buffer/origin/metrics_xlsx.csv"
     psql_conn = PostgreSQLConnection()
     psql_conn.connect()
     # Read the data from the JSON file and import into the database

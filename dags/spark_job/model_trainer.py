@@ -1,9 +1,10 @@
 from pyspark.ml.feature import VectorAssembler
 from pyspark.ml.classification import LogisticRegression
+from pyspark.ml.evaluation import BinaryClassificationEvaluator
 from pyspark.ml import Pipeline
 # from pyspark.ml.evaluation import BinaryClassificationEvaluator, MulticlassClassificationEvaluator
 from pyspark.sql import SparkSession
-from feature_builder import build_feature
+from feature_builder import build_training_feature
 import argparse
 import mlflow
 import sys
@@ -75,7 +76,7 @@ def main(spark, experiment_name, experiment_id, model_name):
     # df = df.join(weather_df, on='location_id', how='inner')
     
     # Define a function to filter data based on continent
-    def filter_by_region(df, min_longitude, max_longitude, min_latitude, max_latitude, label):
+    def filter_by_region(df, min_longitude, max_longitude, min_latitude, max_latitude):
         return df.filter((df.longitude > min_longitude) & 
                         (df.longitude < max_longitude) &
                         (df.latitude < max_latitude) &
@@ -86,7 +87,7 @@ def main(spark, experiment_name, experiment_id, model_name):
                                            "features_soil_temp_0_to_7", "features_soil_temp_7_to_28", "features_soil_temp_28_to_100", "features_soil_temp_100_to_255", \
                                             "features_soil_moisture_0_to_7", "features_soil_moisture_7_to_28", "features_soil_moisture_28_to_100", "features_soil_moisture_100_to_255"],\
                                 outputCol="features")
-    feature_df = build_feature(soil_df, weather_data_df, datetime_df, landslide_event_df)
+    feature_df = build_training_feature(soil_df, weather_data_df, datetime_df, landslide_event_df)
     feature_df = assembler.transform(feature_df)
 
     # Branching by region 
@@ -95,9 +96,9 @@ def main(spark, experiment_name, experiment_id, model_name):
     feature_df = feature_df.join(event_df,on=[event_df['event_id']==feature_df['event_id']])
 
     if model_name == "detector_region_1":
-        train_df = filter_by_region(feature_df, 92, 150, -1, 25, 1)
+        train_df = filter_by_region(feature_df, 70, 160, -13, 25) # Northern Asia
     elif model_name == "detector_region_2":
-        train_df = filter_by_region(feature_df, -1, 54, -83, 56, 0)
+        train_df = filter_by_region(feature_df, -145, -36, -55, 63) # America
         
     train(train_df)
 
@@ -106,9 +107,7 @@ def main(spark, experiment_name, experiment_id, model_name):
 
     # # Combine DataFrames for training
     # combined_df = asia_df.union(america_df)
-
     
-    spark.stop()
 
 def train(feature_df):
     train_data, test_data = feature_df.randomSplit([0.8, 0.2], seed=42)
@@ -131,13 +130,21 @@ def train(feature_df):
         # Train the Logistic Regression model
         lr = LogisticRegression(featuresCol="features", labelCol="label", maxIter=model_params["maxIter"], regParam=model_params["regParam"], elasticNetParam=model_params["elasticNetParam"])
         pipeline = Pipeline(stages=[lr])
-        model = pipeline.fit(train_data)
-        # Log the model as an artifact
-        mlflow.spark.log_model(spark_model=model, artifact_path="model")
-        # Register the model (optional, but recommended) 
-        mlflow.register_model(model_uri=f"runs/{run.info.run_id}/model", name=model_name)
-
+        pipeline.fit(train_data)
         run_id = run.info.run_id
+        # Train-test evaluation (example)
+        # predictions = model.transform(test_data)
+        # evaluator = BinaryClassificationEvaluator(metricName="accuracy")
+        # accuracy = evaluator.evaluate(predictions)
+
+        # Log training metric (example)
+        # mlflow.log_metric(key="accuracy", value=accuracy)
+        # Log the model as an artifact
+        # mlflow.spark.log_model(spark_model=model, artifact_path="model")
+        # Register the model (optional, but recommended) 
+        # mlflow.register_model(model_uri=f"runs/{run.info.run_id}/model", name=model_name)
+
+        
     # Ensure the directory exists before opening the file
     if os.path.exists('/opt/airflow/buffer/mlflow/'):
         with open('/opt/airflow/buffer/mlflow/' + model_name + '.txt', 'w') as outfile:
@@ -176,6 +183,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     main(spark, experiment_name, experiment_id, model_name)
+    
+    spark.stop()
     
 
 

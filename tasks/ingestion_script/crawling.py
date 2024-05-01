@@ -3,9 +3,11 @@ import requests_cache
 import pandas as pd
 import argparse
 from retry_requests import retry
+from datetime import datetime, timedelta
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--source', type=str, default='csv', help='Source of the data (csv or excel)')
+parser.add_argument('--mode', type=str, default='ingest', help='Working mode for ingestion or prediction pipeline')
 args = parser.parse_args()
 
 class Crawler:
@@ -62,21 +64,24 @@ class Crawler:
 if __name__ == "__main__":
     crawler = Crawler()
     try:
-        if args.source == 'csv':
-            occur = pd.read_json('/app/buffer/date_csv.json')
-            out = "/app/buffer/metrics_csv.csv"
+        if args.mode == 'ingest':
+            if args.source == 'csv':
+                occur = pd.read_json('/app/buffer/origin/date_csv_modified.json')
+                out = "/app/buffer/origin/metrics_csv.csv"
+            else:
+                occur = pd.read_json('/app/buffer/origin/date_xlsx_modified.json')
+                out = "/app/buffer/origin/metrics_xlsx.csv"
         else:
-            occur = pd.read_json('/app/buffer/date_xlsx.json')
-            out = "/app/buffer/metrics_xlsx.csv"
+            occur = pd.read_json('/app/buffer/message_broker/outline.json')
+            out = "/app/buffer/message_broker/outline_data.csv"
 
         for line in occur.itertuples():
             info = {
-                'latitude': line.latitude,
-                'longitude': line.longitude,
-                'start_date': "-".join([str(line.year), str(line.month).zfill(2), str(line.date).zfill(2)]),
-                'end_date': "-".join([str(line.year), str(line.month).zfill(2), str(line.date).zfill(2)])
-            }
-            # print(info)
+                    'latitude': line.latitude,
+                    'longitude': line.longitude,
+                    'start_date': "-".join([str(line.year), str(line.month).zfill(2), str(line.date).zfill(2)]),
+                    'end_date': "-".join([str(line.year), str(line.month).zfill(2), str(line.date).zfill(2)])
+                }
             response = crawler.fetch_data(info)
             if isinstance(response, pd.DataFrame):
                 df = pd.DataFrame([line])
@@ -90,24 +95,12 @@ if __name__ == "__main__":
                 # print(combined_df)
             else:
                 print(f"Warning: Unexpected response type from crawler.fetch_data({info}). Expected pandas.DataFrame")
-            # print(response.info())
-            # merged_df = line
-            # merged_df = pd.concat([response, occur], ignore_index=True)
-            # print(merged_df)
-            # combined_df.to_json(out, orient='records')
             if line.Index == 0:
                 combined_df.to_csv(out, index=False)
             else:
                 combined_df.to_csv(out, index=False,mode='a',header=False)
+
     except Exception as e:
         print(e)
-    # response = crawler.fetch_data(
-    #     {
-    #         'latitude':29.9932,
-    #         'longitude':102.9955,
-    #         'start_date':"2007-08-11",
-    #         'end_date':"2007-08-11",
-    #     }
-    # )
-    # print(response)
+
     

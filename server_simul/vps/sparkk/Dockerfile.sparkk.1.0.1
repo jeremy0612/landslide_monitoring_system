@@ -8,5 +8,6 @@ RUN apt-get update && apt-get install -y wget gnupg
 RUN pip install mlflow
 RUN export MLFLOW_TRACKING_URI=http://0.0.0.0:5005
 COPY entrypoint.sh /opt/bitnami/scripts/spark/
+
 # ENTRYPOINT [ "/bin/bash","/opt/bitnami/scripts/spark/entrypoint.sh" ]
 # CMD mlflow server --host 0.0.0.0 --port 5005
