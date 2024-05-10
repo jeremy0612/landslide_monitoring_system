@@ -9,7 +9,7 @@ drop table if exists Datetime;
 -- 1. Create the Location table
 CREATE TABLE Location (
   location_id SERIAL PRIMARY KEY,
-  country VARCHAR(50) NULL,
+  country VARCHAR(12) NULL,
   near VARCHAR(100) NULL,
   continent VARCHAR(4)  NULL,
   elevation INT NOT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE Event (
   timezone VARCHAR(15) NOT NULL,
   month SMALLINT NOT NULL CHECK (month BETWEEN 1 AND 12),  -- Enforce month range (1-12)
   year INTEGER NOT NULL,
-  country VARCHAR(50) NULL,
+  country VARCHAR(12) NULL,
   near VARCHAR(100) NULL,
   continent VARCHAR(4)  NULL,
   elevation INT NOT NULL ,

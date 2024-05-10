@@ -74,10 +74,15 @@ case "$1" in
   *)
     # Non-spark-on-k8s command provided, check if Spark was started
     if [[ -d /opt/bitnami/spark/work ]]; then
-      echo "Spark successfully initialized. Starting MLflow server..."
-      mlflow server -h 0.0.0.0 -p 5005 &
+        echo "Spark successfully initialized. Starting MLflow server..."
+        # Corrected mlflow server command
+        mlflow server -h 0.0.0.0 -p 5005 \
+            --artifacts-destination /mlartifacts \
+            --no-serve-artifacts \
+            --default-artifact-root /mlruns \
+            --backend-store-uri /mlruns &
     else
-      echo "Spark initialization not detected. Skipping MLflow server."
+        echo "Spark initialization not detected. Skipping MLflow server."
     fi
     # Non-spark-on-k8s command provided, proceeding in pass-through mode
     CMD=("$@")

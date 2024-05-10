@@ -69,6 +69,15 @@ The same as spark connection, you need to create dedfault file system connection
 | Conn Type | File | Type of connection . |
 | Host | localhost | The files stored in buffer folder  |
 
+### MLFlow connection
+The MLflow need an HTTP connection for using the api provided by self-hosted tracking server
+| Field Name | Value | Description |
+|---|---|---|
+| Conn ID | mlflow_default | the name is used in the DAGs  |
+| Conn Type | HTTP | Type of connection . |
+| Host | spark-master | The tracking server is hosted in spark master container  |
+| Port | 5005 | Port on which the mlflow server listens. |
+
 The Airflow UI should look like this.
 ![loading](../../assets/airflow_connection.jpg)
 

@@ -54,7 +54,7 @@ with DAG(
 
     extracted_csv = FileSensor(
         task_id="extracted_csv",
-        filepath='/opt/airflow/buffer/date_csv.json',
+        filepath='/opt/airflow/buffer/origin/date_csv.json',
         poke_interval=10,
         timeout=100
     )
@@ -73,7 +73,7 @@ with DAG(
 
     extracted_xlsx = FileSensor(
         task_id="extracted_xlsx",
-        filepath='/opt/airflow/buffer/date_xlsx.json',
+        filepath='/opt/airflow/buffer/origin/date_xlsx.json',
         poke_interval=10,
         timeout=100
     )
@@ -92,7 +92,7 @@ with DAG(
 
     crawled_csv = FileSensor(
         task_id="crawled_csv",
-        filepath='/opt/airflow/buffer/metrics_csv.csv',
+        filepath='/opt/airflow/buffer/origin/metrics_csv.csv',
         poke_interval=10,
         timeout=100
     )
@@ -111,7 +111,7 @@ with DAG(
 
     crawled_xlsx = FileSensor(
         task_id="crawled_xlsx",
-        filepath='/opt/airflow/buffer/metrics_xlsx.csv',
+        filepath='/opt/airflow/buffer/origin/metrics_xlsx.csv',
         poke_interval=10,
         timeout=100
     )

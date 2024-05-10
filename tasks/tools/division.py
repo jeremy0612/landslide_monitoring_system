@@ -1,8 +1,8 @@
 import pandas as pd
 
 # File paths
-csv_file_path = "../datasource/Landslides.csv"
-excel_file_path = "../datasource/Global_Landslide_Data.xlsx"
+csv_file_path = "../data/Landslides.csv"
+excel_file_path = "../data/Global_Landslide_Data.xlsx"
 
 # Read the entire CSV and Excel files
 csv_data = pd.read_csv(csv_file_path)

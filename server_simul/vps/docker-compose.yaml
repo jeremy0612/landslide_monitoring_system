@@ -48,6 +48,8 @@ x-airflow-common:
     - ../../plugins:/opt/airflow/plugins
     - ../../tmp/airflow_logs:/opt/airflow/logs
     - ../../tmp/buffer:/opt/airflow/buffer
+    - ../../mlruns:/mlruns
+    - ../../mlartifacts:/mlartifacts
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -83,6 +85,20 @@ services:
       test: ["CMD", "pg_isready", "-U", "admin", "-d", "landslide_warehouse"]
       interval: 5s
       retries: 10
+  superset:
+    image: supersett:1.0.1
+    # build:
+    #   dockerfile: ./supersett/Dockerfile.supersett.1.0.1
+    environment:
+        - ADMIN_USERNAME=admin
+        - ADMIN_EMAIL=admin@superset.com
+        - ADMIN_PASSWORD=123456
+    volumes:
+      - ../../dashboard:/app/superset_home
+    ports:
+      - '8088:8088'
+    depends_on:
+      - postgres
   # Uncomment the scheduler service if you change to ver1 airflow
   # scheduler:
   #   build:
@@ -178,8 +194,8 @@ services:
       - ../../dags/spark_job:/usr/local/share/spark/   
       - ../../tmp/spark_logs:/opt/bitnami/spark/logs
       - ../../tmp/buffer:/usr/local/share/buffer
-      - ../../dags/spark_job/mlruns:/opt/bitnami/spark/mlruns
-      - ../../dags/spark_job/mlartifacts:/opt/bitnami/spark/mlartifacts
+      - ../../mlruns:/mlruns
+      - ../../mlartifacts:/mlartifacts
 
   spark-worker:
     image: sparkk:1.0.1

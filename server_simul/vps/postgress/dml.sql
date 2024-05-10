@@ -7,8 +7,16 @@ RETURNS TRIGGER AS $$
         datetime_idd integer;
         BEGIN
           -- Get the updated data from the trigger
-          INSERT INTO Location (country, near, continent, elevation, longitude, latitude) -- Replace with target table & columns
-          VALUES (NEW.country, NEW.near, NEW.continent,NEW.elevation, NEW.longitude, NEW.latitude) returning location_id into location_idd;
+            SELECT location_id into location_idd
+            FROM Location
+            WHERE longitude = NEW.longitude AND latitude = NEW.latitude;
+
+            if location_idd is null then
+                INSERT INTO Location (country, near, continent, elevation, longitude, latitude)
+                VALUES (NEW.country, NEW.near, NEW.continent, NEW.elevation, NEW.longitude, NEW.latitude)
+                returning location_id into location_idd;
+            end if;
+
 
           INSERT INTO Datetime ( date, time, timezone, month, year) -- Replace with target table & columns
           VALUES (NEW.date, NEW.time, NEW.timezone, NEW.month, NEW.year) returning datetime_id into datetime_idd;
@@ -23,6 +31,7 @@ RETURNS TRIGGER AS $$
           RETURN NEW;
         END;
 $$ LANGUAGE plpgsql;
+
 --  Create the trigger on update data
 CREATE OR REPLACE FUNCTION copy_updated_data()
     RETURNS TRIGGER AS $$
@@ -32,6 +41,7 @@ DECLARE
     location_idd integer;
 BEGIN
     SELECT location_id into location_idd from Location where longitude = NEW.longitude and latitude = NEW.latitude;
+    -- SELECT datetime_id into datetime_idd from Datetime where Datetime.date = NEW.date and month = NEW.month and year = NEW.year;
     -- Get the updated data from the trigger
     INSERT INTO Datetime ( date, time, timezone, month, year) -- Replace with target table & columns
     VALUES (NEW.date, NEW.time, NEW.timezone, NEW.month, NEW.year) returning datetime_id into datetime_idd;

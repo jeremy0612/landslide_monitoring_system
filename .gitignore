@@ -1,8 +1,9 @@
 # Ignore reports & documents
 document/related_research
 document/proposal/*.pdf
-# Ignore raspberry pi certificates
+# Ignore aws mqtt broker certificates
 server_simul/raspi/certs
+tasks/inference_script/certs
 # Ignore datasources
 datasource/Landslides.csv
 datasource/Global_Landslide_Data.xlsx
@@ -11,6 +12,7 @@ datasource/Global_Landslide_Data.xlsx
 /.idea
 /*.ini
 /*.sqlite
+/__pycache__/
 /__pycache__/*
 *.pyc
 /*rar

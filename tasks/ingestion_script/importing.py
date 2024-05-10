@@ -23,7 +23,7 @@ def insert_event(row):
         VALUES ('{}', '{}', '{}', {}, '{}', '{}', {}, {}, '{}', '{}', '{}', {}, {}, {})\
         returning event_id,location_id, datetime_id;"""\
         .format(row['hazard_type'], row['landslide_type'], row['landslide_size'], row['date'], row['time'],\
-                 "UTC", row['month'],row['year'], str(row['country']).replace("'", "''"), str(row['near']).replace("'", "''"), row['continentcode'],\
+                 "UTC", row['month'],row['year'], str(row['country_code']).replace("'", "''"), str(row['near']).replace("'", "''"), row['continentcode'],\
                  row['elevation'], row['longitude_info'], row['latitude_info'])
     query = query.replace("'nan'", "NULL")
     # print(query)
@@ -50,9 +50,9 @@ def insert_data(row):
 if __name__ == '__main__':
     # Define the filename of the JSON file
     if args.source == 'csv':
-        file_path = "/app/buffer/metrics_csv.csv"
+        file_path = "/app/buffer/origin/metrics_csv.csv"
     else:
-        file_path = "/app/buffer/metrics_xlsx.csv"
+        file_path = "/app/buffer/origin/metrics_xlsx.csv"
     psql_conn = PostgreSQLConnection()
     psql_conn.connect()
     # Read the data from the JSON file and import into the database
