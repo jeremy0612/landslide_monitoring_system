@@ -55,11 +55,11 @@ def on_message_received(topic, payload, dup, qos, retain, **kwargs):
     print("Received message from topic '{}': {}".format(topic, payload))
     global received_count
     received_count += 1
-    if received_count == 100:
-        received_count = 0
-        print("Received 100 messages!")
-    if received_count == cmdData.input_count:
-        received_all_event.set()
+    # if received_count == 100:
+    #     received_count = 0
+    #     print("Received 100 messages!")
+    # if received_count == cmdData.input_count:
+    #     received_all_event.set()
 
 # Callback when the connection successfully connects
 def on_connection_success(connection, callback_data):

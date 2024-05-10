@@ -69,18 +69,13 @@ def predicting():
             timeout=180,
             filepath="/opt/airflow/buffer/message_broker/outline_america.csv"
         )
-        @task
-        def get_run_id_region_1():
-            with open('/opt/airflow/buffer/mlflow/detector_region_1.txt', 'r') as f:
-                run_id = f.read()
-            return run_id
         predict_america = SparkSubmitOperator(
             task_id="predict_america_outline",
             application="/opt/airflow/dags/spark_job/model_detector.py",
             conn_id='spark_default',
             application_args=[
                 "--region","america",
-                "--run_id","{{ ti.xcom_pull(task_ids='predict.get_run_id_region_1') }}"
+                "--artifact_path","{{ ti.xcom_pull(dag_id='training', task_ids='register_model_region_1.create_model_version',include_prior_dates=True)['model_version']['source'] }}"
             ],
             trigger_rule='all_success'
         )
@@ -90,24 +85,19 @@ def predicting():
             timeout=180,
             filepath="/opt/airflow/buffer/message_broker/outline_northern_asia.csv"
         )
-        @task
-        def get_run_id_region_2():
-            with open('/opt/airflow/buffer/mlflow/detector_region_2.txt', 'r') as f:
-                run_id = f.read()
-            return run_id
         predict_northern_asia = SparkSubmitOperator(
             task_id="predict_northern_asia_outline",
             application="/opt/airflow/dags/spark_job/model_detector.py",
             conn_id='spark_default',
             application_args=[
                 "--region","northern_asia",
-                "--run_id","{{ ti.xcom_pull(task_ids='predict.get_run_id_region_2') }}"
+                "--artifact_path","{{ ti.xcom_pull(dag_id='training', task_ids='register_model_region_2.create_model_version',include_prior_dates=True)['model_version']['source'] }}"
             ],
             trigger_rule='all_success'
         )
 
-        america_data_exist >> get_run_id_region_1() >> predict_america
-        northern_asia_data_exist >> get_run_id_region_2() >> predict_northern_asia
+        america_data_exist >> predict_america
+        northern_asia_data_exist >> predict_northern_asia
         
 
     start >> outline_exist >> prepare_data >> data_exist 

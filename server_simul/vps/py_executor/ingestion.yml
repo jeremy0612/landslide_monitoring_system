@@ -21,4 +21,6 @@ dependencies:
       - retry-requests==2.0.0
       - url-normalize==1.4.3
       - urllib3==2.2.1
+      - python-restcountries==2.0.0
+      - pycountry
 prefix: /home/j3r3my0612/miniconda3/envs/landslide_ingestion

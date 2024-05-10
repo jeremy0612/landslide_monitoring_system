@@ -17,7 +17,7 @@ def parse_arguments():
     """
     parser = argparse.ArgumentParser(description="Landslide detection model predictor")
     parser.add_argument("--region", type=str, help="Specific model for prediction depending on region")
-    parser.add_argument("--run_id", type=str, help="Specific run id for prediction")
+    parser.add_argument("--artifact_path", type=str, help="Specific artifact location of the respective model")
     return parser.parse_args()
 
 def main(spark):
@@ -57,7 +57,7 @@ def build_feature(prepared_df):
     return feature_df_pandas
 
 def predict(feature_df_pandas,metadata_df):
-    logged_model = '/mlartifacts/{}/artifacts/model'.format(args.run_id)
+    logged_model = args.artifact_path
     # out_path = '/opt/airflow/buffer/destination/predicting_{}.csv'.format(datetime.now().strftime("%Y%m%d%H%M%S"))
     if args.region == "america":
     #     logged_model = 'models:/detector_region_2/3'

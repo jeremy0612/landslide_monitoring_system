@@ -1,0 +1,77 @@
+<mxfile host="Electron" modified="2024-05-09T03:55:57.583Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.1.5 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="fKPaQNKdjLeUAgihjSSb" version="23.1.5" type="device">
+  <diagram name="Page-1" id="21ymKaLn-vzZV5qqmJOk">
+    <mxGraphModel dx="2284" dy="844" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-1" value="" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="290" width="590" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-2" value="Raspberry pi 3" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=17;" vertex="1" parent="1">
+          <mxGeometry x="275" y="300" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-3" value="Read value" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="350" width="110" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-4" value="Noises Filtering" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="290" y="350" width="110" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-5" value="Unusual Outlier Filtering" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="350" width="110" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-6" value="Gyroscope" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" vertex="1" parent="1">
+          <mxGeometry x="-150" y="360" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-7" value="Accelerator" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" vertex="1" parent="1">
+          <mxGeometry x="-160" y="450" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-8" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="VorYPbT4rzsQoqxaNYXA-6" target="VorYPbT4rzsQoqxaNYXA-3">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="460" as="sourcePoint" />
+            <mxPoint x="450" y="410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-9" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="VorYPbT4rzsQoqxaNYXA-7" target="VorYPbT4rzsQoqxaNYXA-3">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-40" y="420" as="sourcePoint" />
+            <mxPoint x="130" y="400" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="30" y="480" />
+              <mxPoint x="30" y="390" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-10" value="" style="endArrow=classic;html=1;rounded=0;" edge="1" parent="1" source="VorYPbT4rzsQoqxaNYXA-3" target="VorYPbT4rzsQoqxaNYXA-4">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-30" y="430" as="sourcePoint" />
+            <mxPoint x="140" y="410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-11" value="" style="endArrow=classic;html=1;rounded=0;" edge="1" parent="1" source="VorYPbT4rzsQoqxaNYXA-4" target="VorYPbT4rzsQoqxaNYXA-5">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="240" y="400" as="sourcePoint" />
+            <mxPoint x="300" y="400" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-12" value="GPS module" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" vertex="1" parent="1">
+          <mxGeometry x="455" y="520" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-13" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="VorYPbT4rzsQoqxaNYXA-12" target="VorYPbT4rzsQoqxaNYXA-5">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-40" y="550" as="sourcePoint" />
+            <mxPoint x="130" y="400" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-14" value="AWS MQTT broker" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="110" width="210" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.55;entryY=0.95;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="VorYPbT4rzsQoqxaNYXA-5" target="VorYPbT4rzsQoqxaNYXA-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VorYPbT4rzsQoqxaNYXA-17" value="Cronjob scheduling" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="290" y="450" width="110" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

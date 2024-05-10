@@ -4,6 +4,7 @@ from pyspark.ml.evaluation import BinaryClassificationEvaluator
 from pyspark.ml import Pipeline
 # from pyspark.ml.evaluation import BinaryClassificationEvaluator, MulticlassClassificationEvaluator
 from pyspark.sql import SparkSession
+from datetime import datetime
 from feature_builder import build_training_feature
 import argparse
 import mlflow
@@ -28,6 +29,7 @@ def parse_arguments():
 def main(spark, experiment_name, experiment_id, model_name):
     # Set MLflow tracking URI (assuming your MLflow server is running at http://127.0.0.1:5005)
     mlflow.set_tracking_uri("http://spark-master:5005")
+    # mlflow.enable_system_metrics_logging()
     mlflow.pyspark.ml.autolog(spark)
     # mlflow.spark.autolog()
     # Read data from Postgres
@@ -126,12 +128,14 @@ def train(feature_df):
     }
     
     # Start MLflow run with experiment ID and name (optional)
-    with mlflow.start_run(experiment_id=experiment_id) as run:
+    with mlflow.start_run(experiment_id=experiment_id, \
+                          log_system_metrics=True, \
+                          run_name="{}_{}".format(model_name, datetime.now().strftime("%Y%m%d"))) as run:
         # Train the Logistic Regression model
         lr = LogisticRegression(featuresCol="features", labelCol="label", maxIter=model_params["maxIter"], regParam=model_params["regParam"], elasticNetParam=model_params["elasticNetParam"])
         pipeline = Pipeline(stages=[lr])
         pipeline.fit(train_data)
-        run_id = run.info.run_id
+        # run_id = run.info.run_id
         # Train-test evaluation (example)
         # predictions = model.transform(test_data)
         # evaluator = BinaryClassificationEvaluator(metricName="accuracy")
@@ -143,18 +147,6 @@ def train(feature_df):
         # mlflow.spark.log_model(spark_model=model, artifact_path="model")
         # Register the model (optional, but recommended) 
         # mlflow.register_model(model_uri=f"runs/{run.info.run_id}/model", name=model_name)
-
-        
-    # Ensure the directory exists before opening the file
-    if os.path.exists('/opt/airflow/buffer/mlflow/'):
-        with open('/opt/airflow/buffer/mlflow/' + model_name + '.txt', 'w') as outfile:
-            outfile.write(run_id)
-    else:
-        os.makedirs('/opt/airflow/buffer/mlflow/', exist_ok=True)  # Create directories recursively, ignoring already existing ones
-        with open('/opt/airflow/buffer/mlflow/' + model_name + '.txt', 'w') as outfile:
-                outfile.write(run_id)
-        
-    pass
 
 if __name__ == "__main__":
     # Parse arguments

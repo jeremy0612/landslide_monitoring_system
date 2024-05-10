@@ -1,5 +1,6 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col,  when, lit
+from pyspark.sql.functions import col,  when, lit , cast
+import pandas
 
 if __name__ == "__main__":
     # Initialize the spark job
@@ -84,6 +85,9 @@ if __name__ == "__main__":
                     .withColumnRenamed('max(soil_moisture_28_to_100)', 'soil_moisture_28_to_100')\
                     .withColumnRenamed('max(soil_moisture_100_255)', 'soil_moisture_100_255')
     
+    # soil_df.show(10)
+    # soil_df.printSchema()
+
     data_df = weather_data_df.join(soil_df, \
                                     on=[soil_df['weather_data_id']==weather_data_df['fact_id']],\
                                     how='inner')\
@@ -91,7 +95,8 @@ if __name__ == "__main__":
                                             'soil_temp_0_to_7','soil_temp_7_to_28','soil_temp_28_to_100','soil_temp_100_255',\
                                             'soil_moisture_0_to_7','soil_moisture_7_to_28','soil_moisture_28_to_100','soil_moisture_100_255')
     
-    data_df = data_df.join(datetime_df, on='datetime_id', how='inner')
+    data_df = data_df.join(datetime_df, on='datetime_id', how='inner')\
+                        .withColumn("time_info", datetime_df["time"].cast("string"))
     event_df = landslide_event_df.join(datetime_df, on='datetime_id', how='inner')\
                                 .select(col('event_id'), col('landslide_type'), \
                                          col('size'), col('location_id'),col('date'),col('month'),col('year'))
@@ -105,15 +110,22 @@ if __name__ == "__main__":
                         .sort('event_id','time')
     
     merged_df = merged_df.select('event_id', 'landslide_type', 'size',\
-                                 'time', event_df['location_id'],\
+                                 'time', 'time_info', event_df['location_id'],\
                                  'temperature', 'rain', 'precipitation', 'relative_humidity',\
                                  'soil_temp_0_to_7','soil_temp_7_to_28','soil_temp_28_to_100','soil_temp_100_255',\
                                  'soil_moisture_0_to_7','soil_moisture_7_to_28','soil_moisture_28_to_100','soil_moisture_100_255')
     merged_df = merged_df.dropDuplicates(subset=['location_id', 'time'])
 
+    # merged_df.write.format('csv').options(header='true').mode('overwrite').save('/app/buffer/origin/sample_feature.csv')
     # processed_df.show()
-    merged_df.show(48)
+    # merged_df.show(48)
+    
+    merged_df = merged_df.drop(merged_df['time'])
     merged_df.printSchema()
+    merged_df = merged_df.toPandas()
+    merged_df["time"] = pandas.to_datetime(merged_df["time_info"])
+    merged_df.to_csv('/usr/local/share/buffer/destination/event_feature.csv', index=False)
+    
 
     spark.stop()
 

@@ -2,14 +2,39 @@ import openmeteo_requests
 import requests_cache
 import pandas as pd
 import argparse
+import pycountry
 from retry_requests import retry
 from datetime import datetime, timedelta
+from restcountries import RestCountryApiV2 as rapi
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--source', type=str, default='csv', help='Source of the data (csv or excel)')
 parser.add_argument('--mode', type=str, default='ingest', help='Working mode for ingestion or prediction pipeline')
 args = parser.parse_args()
 
+def fetch_country_code(name):
+    try:
+        code = pycountry.countries.get(name=name).alpha_3
+        return code
+    except:
+        exception = {
+            "Democratic Republic of Congo": "COD",
+            "Myanmar (Burma)": "MMR",
+            "North Korea": "PRK",
+            "South Korea": "KOR",
+            "The Republic of Korea": "KOR",
+            "St. Lucia": "LCA"
+        }
+        try:
+            country_list = rapi.get_countries_by_name(name)
+        except:
+            try:
+                return exception[name]
+            except:
+                return 'Unknown'
+        country = country_list[0]
+        return country.alpha3_code
+        
 class Crawler:
     def __init__(self):
         # Initialize API client with cache and retry
@@ -92,6 +117,11 @@ if __name__ == "__main__":
                 # Handle potential column name conflicts:
                 if any(col in combined_df.columns for col in info.keys()):
                     combined_df.columns = [f'{col}_info' if col in info.keys() else col for col in combined_df.columns]
+                # countries = {}
+                # for country in pycountry.countries:
+                #     countries[country.name] = country.alpha_3
+                # combined_df['country_code'] = [countries.get(country, 'Unknown code') for country in combined_df['country']]
+                combined_df['country_code'] = combined_df['country'].apply(fetch_country_code)
                 # print(combined_df)
             else:
                 print(f"Warning: Unexpected response type from crawler.fetch_data({info}). Expected pandas.DataFrame")

@@ -11,7 +11,7 @@ from mlflow_provider.operators.registry import (
     TransitionModelVersionStageOperator,
 )
 from datetime import datetime
-    
+
 ## MLFlow parameters
 MLFLOW_CONN_ID = "mlflow_default"
 EXPERIMENT_NAME = "landslide_detection"
@@ -131,18 +131,23 @@ def training():
             "--model_name", "detector_region_1",
         ]
     )
-    check_current_run_id_1 = FileSensor(
-        task_id="check_current_run_id_1",
-        filepath='/opt/airflow/buffer/mlflow/detector_region_1.txt',
-        poke_interval=15,
-        timeout=100
-    )
+
     @task
-    def get_run_id_region_1():
-        with open('/opt/airflow/buffer/mlflow/detector_region_1.txt', 'r') as f:
-            run_id = f.read()
-        return run_id
-    
+    def get_run_id_region_1(**context):
+        mlflow_hook = MLflowClientHook(mlflow_conn_id=MLFLOW_CONN_ID)
+        experiment_id = context['ti'].xcom_pull(task_ids='prepare_mlflow_experiment.get_current_experiment_id', key='return_value')
+        params = {
+                    "filter": "tags.mlflow.runName = 'detector_region_1_{}' ".format(datetime.now().strftime("%Y%m%d")),
+                    "experiment_ids": [str(experiment_id)]
+                }
+        info = mlflow_hook.run(
+            endpoint="api/2.0/mlflow/runs/search",
+            request_params = params
+        ).json()
+        print(params)
+        print(info)
+        return info['runs'][0]['info']['run_uuid']
+
     @task_group
     def register_model_region_1():
         @task.branch
@@ -215,17 +220,22 @@ def training():
             "--model_name", "detector_region_2",
         ]
     )
-    check_current_run_id_2 = FileSensor(
-        task_id="check_current_run_id_2",
-        filepath='/opt/airflow/buffer/mlflow/detector_region_2.txt',
-        poke_interval=15,
-        timeout=100
-    )
-    @task
-    def get_run_id_region_2():
-        with open('/opt/airflow/buffer/mlflow/detector_region_2.txt', 'r') as f:
-            run_id = f.read()
-        return run_id
+
+    @task 
+    def get_run_id_region_2(**context):
+        mlflow_hook = MLflowClientHook(mlflow_conn_id=MLFLOW_CONN_ID)
+        experiment_id = context['ti'].xcom_pull(task_ids='prepare_mlflow_experiment.get_current_experiment_id', key='return_value')
+        params = {
+                    "filter": "tags.mlflow.runName = 'detector_region_2_{}' ".format(datetime.now().strftime("%Y%m%d")),
+                    "experiment_ids": [str(experiment_id)]
+                }
+        info = mlflow_hook.run(
+            endpoint="api/2.0/mlflow/runs/search",
+            request_params = params
+        ).json()
+        print(params)
+        print(info)
+        return info['runs'][0]['info']['run_uuid']
     
     @task_group
     def register_model_region_2():
@@ -290,7 +300,7 @@ def training():
 
 
     start >> prepare_mlflow_experiment() >> [train_region_1, train_region_2]
-    train_region_1 >> check_current_run_id_1 >> get_run_id_region_1() >> register_model_region_1() >> end
-    train_region_2 >> check_current_run_id_2 >> get_run_id_region_2() >> register_model_region_2() >> end
+    train_region_1 >> get_run_id_region_1() >> register_model_region_1() >> end
+    train_region_2 >> get_run_id_region_2() >> register_model_region_2() >> end
 
 training()

@@ -23,7 +23,7 @@ def insert_event(row):
         VALUES ('{}', '{}', '{}', {}, '{}', '{}', {}, {}, '{}', '{}', '{}', {}, {}, {})\
         returning event_id,location_id, datetime_id;"""\
         .format(row['hazard_type'], row['landslide_type'], row['landslide_size'], row['date'], row['time'],\
-                 "UTC", row['month'],row['year'], str(row['country']).replace("'", "''"), str(row['near']).replace("'", "''"), row['continentcode'],\
+                 "UTC", row['month'],row['year'], str(row['country_code']).replace("'", "''"), str(row['near']).replace("'", "''"), row['continentcode'],\
                  row['elevation'], row['longitude_info'], row['latitude_info'])
     query = query.replace("'nan'", "NULL")
     # print(query)
