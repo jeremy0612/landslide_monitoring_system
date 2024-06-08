@@ -210,13 +210,18 @@ if __name__ == "__main__":
         .load()
 
     merged_df = build_training_feature(soil_df, weather_data_df, datetime_df, landslide_event_df)
-
+    # # Get number of rows
+    # row_count = merged_df.count()
+    
+    # # Get number of columns
+    # col_count = len(merged_df.columns)
+    # print(f"Shape of merged_df: ({row_count}, {col_count})")
     # landslide_df = merged_df.where(col("landslide_type").isNotNull())
     # normal_df = merged_df.where(col("landslide_type").isNull())
 
     # landslide_df.show(48)
     # normal_df.show(48)
-    # merged_df.show(72)
+    # merged_df.show()
     merged_df.printSchema()
     # merged_df.write.csv("../buffer/message_broker/sample_feature.csv",header=True)
     spark.stop()

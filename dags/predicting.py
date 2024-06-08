@@ -22,7 +22,7 @@ import pandas as pd
 )
 def predicting():
     start = EmptyOperator(task_id="start_predicting")
-    end = EmptyOperator(task_id="end_predicting")
+    end = EmptyOperator(task_id="end_predicting",trigger_rule='all_done')
 
     outline_exist = FileSensor(
         task_id="check_outline_exist",
@@ -56,10 +56,11 @@ def predicting():
         # Filter data in America
         df_filtered2 = df[(df['longitude_info'] >= -145) & (df['longitude_info'] <= -36) & 
                         (df['latitude_info'] >= -55) & (df['latitude_info'] <= 63)]
-
         # Save filtered DataFrames to separate CSV files
-        df_filtered1.to_csv('/opt/airflow/buffer/message_broker/outline_northern_asia.csv', index=False)
-        df_filtered2.to_csv('/opt/airflow/buffer/message_broker/outline_america.csv', index=False)
+        if not df_filtered1.empty:
+            df_filtered1.to_csv('/opt/airflow/buffer/message_broker/outline_northern_asia.csv', index=False)
+        if not df_filtered2.empty:
+            df_filtered2.to_csv('/opt/airflow/buffer/message_broker/outline_america.csv', index=False)
     
     @task_group(group_id="predict")
     def predict():
@@ -73,6 +74,7 @@ def predicting():
             task_id="predict_america_outline",
             application="/opt/airflow/dags/spark_job/model_detector.py",
             conn_id='spark_default',
+            jars='/opt/airflow/dags/spark_job/postgresql-42.3.9.jar',
             application_args=[
                 "--region","america",
                 "--artifact_path","{{ ti.xcom_pull(dag_id='training', task_ids='register_model_region_1.create_model_version',include_prior_dates=True)['model_version']['source'] }}"
@@ -89,6 +91,7 @@ def predicting():
             task_id="predict_northern_asia_outline",
             application="/opt/airflow/dags/spark_job/model_detector.py",
             conn_id='spark_default',
+            jars='/opt/airflow/dags/spark_job/postgresql-42.3.9.jar',
             application_args=[
                 "--region","northern_asia",
                 "--artifact_path","{{ ti.xcom_pull(dag_id='training', task_ids='register_model_region_2.create_model_version',include_prior_dates=True)['model_version']['source'] }}"

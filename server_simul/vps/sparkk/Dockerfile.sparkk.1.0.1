@@ -5,7 +5,12 @@ RUN mkdir -p "/content"
 RUN apt-get update && apt-get install -y wget gnupg
 
 # pip
+RUN pip install psutil
 RUN pip install mlflow
+RUN pip3 install torch 
+RUN pip install torchviz
+RUN pip install graphviz
+RUN pip install pynvml
 RUN export MLFLOW_TRACKING_URI=http://0.0.0.0:5005
 COPY entrypoint.sh /opt/bitnami/scripts/spark/
 

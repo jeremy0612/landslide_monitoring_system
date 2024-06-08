@@ -1,12 +1,14 @@
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, functions as F
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql.functions import col, cast
+from torch.utils.data import TensorDataset
 from feature_builder import build_predicting_feature
 from datetime import datetime
 import mlflow
 import argparse
 import pandas
-
+import numpy
+import torch 
 
 def parse_arguments():
     """
@@ -24,8 +26,10 @@ def main(spark):
     # mlflow.set_tracking_uri("http://spark-master:5005")
     if args.region == "america":
         in_path = "/opt/airflow/buffer/message_broker/outline_america.csv"
+        # in_path = "/usr/local/share/buffer/message_broker/outline_america.csv"
     elif args.region == "northern_asia":
         in_path = "/opt/airflow/buffer/message_broker/outline_northern_asia.csv"
+        # in_path = "/usr/local/share/buffer/message_broker/outline_northern_asia.csv"
     else:
         in_path = "/opt/airflow/buffer/message_broker/outline_data.csv"
 
@@ -40,8 +44,20 @@ def main(spark):
                                 "soil_moisture_0_to_7cm":"avg","soil_moisture_7_to_28cm":"avg","soil_moisture_28_to_100cm":"avg","soil_moisture_100_to_255cm":"avg"})\
                             .select("Index","longitude_info","latitude_info","date","year","month","elevation","time")
     # metadata_df.show()
-    predict(build_feature(prepared_df),metadata_df)
-    # print(prediction, type(prediction))
+    result_df = spark.createDataFrame(predict(build_feature(prepared_df)))
+    result_df = result_df.join(metadata_df, on="Index")
+    # result_df = result_df.toPandas()
+    # result_df.info()
+    # result_df.to_csv('/opt/airflow/buffer/destination/inference.csv', index=False)
+    result_df.printSchema()
+    result_df.write.format("jdbc")\
+        .option("url", "jdbc:postgresql://postgres:5432/landslide_warehouse")\
+        .option("driver", "org.postgresql.Driver")\
+        .option("dbtable", "inference")\
+        .option("user", "admin")\
+        .option("password", "123456")\
+        .mode("append")\
+        .save()
 
 
 def build_feature(prepared_df):
@@ -52,11 +68,35 @@ def build_feature(prepared_df):
                                            "features_soil_temp_0_to_7", "features_soil_temp_7_to_28", "features_soil_temp_28_to_100", "features_soil_temp_100_to_255", \
                                             "features_soil_moisture_0_to_7", "features_soil_moisture_7_to_28", "features_soil_moisture_28_to_100", "features_soil_moisture_100_to_255"],\
                                 outputCol="features")
+    # zero_value = F.lit(0)
+    # feature_df = feature_df.withColumn("label",zero_value)
     feature_df = assembler.transform(feature_df)
-    feature_df_pandas = feature_df.toPandas()
-    return feature_df_pandas
+    feature_df = feature_df.select("features","Index")
+    feature_df.show()
+    print(feature_df[0])
+    feature_df.printSchema()
+    # feature_df_pandas = feature_df.toPandas()
+    data = feature_df.select("features","Index").collect()
+    temp = [numpy.array(row["features"]).reshape(1,288) for row in data]
+    # print(temp)
+    X = torch.tensor(temp,dtype=torch.float32)
+    y = torch.tensor([row["Index"] for row in data],dtype=torch.long)
+    feature_df_torch = TensorDataset(X, y)
+    
+    features = []
+    indexes = []
+    for sample in feature_df_torch:
+        print(sample[0].shape)
+        features.append(sample[0].numpy())
+        indexes.append(sample[1].numpy())
 
-def predict(feature_df_pandas,metadata_df):
+    feature = pandas.DataFrame()
+    feature['Features'] = features
+    feature['Index'] = indexes
+    
+    return feature
+
+def predict(feature_df_pandas):
     logged_model = args.artifact_path
     # out_path = '/opt/airflow/buffer/destination/predicting_{}.csv'.format(datetime.now().strftime("%Y%m%d%H%M%S"))
     if args.region == "america":
@@ -70,13 +110,21 @@ def predict(feature_df_pandas,metadata_df):
         out_path = '/opt/airflow/buffer/destination/predicting_{}.csv'.format(datetime.now().strftime("%Y%m%d%H%M%S"))
 
     loaded_model = mlflow.pyfunc.load_model(logged_model)
-    prediction = loaded_model.predict(feature_df_pandas)
-    result_df = feature_df_pandas.assign(prediction=prediction)
-    metadata_df = metadata_df.withColumn("time", metadata_df["time"].cast("string"))  # Convert to string temporarily
-    metadata_df = metadata_df.toPandas()
-    metadata_df["time"] = pandas.to_datetime(metadata_df["time"])
-    result_df = result_df.set_index('Index').join(metadata_df.set_index('Index'), how='outer')
-    result_df.to_csv(out_path, index=True)
+
+    predictions = pandas.DataFrame()
+    for row in feature_df_pandas.itertuples():
+        # print(row)
+        prediction = loaded_model.predict(row.Features)
+        predictions = predictions.append({'Index': row.Index, 'prediction': prediction}, ignore_index=True)
+
+    print('prediction: \n', predictions)
+    print('shape: ', predictions.shape)
+    print('type(prediction): ', type(predictions))
+    predictions['prediction'] = predictions['prediction'].apply(lambda x: x[0][0])
+    # predictions['prediction'] = predictions['prediction'].iloc[:, 0]
+    # print('inference: ', predictions['prediction'].iloc[0][0][0], type(predictions['prediction'].iloc[0][0][0]))
+    return predictions
+
 
 if __name__ == "__main__":
     # Parse arguments

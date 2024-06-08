@@ -7,6 +7,8 @@ from retry_requests import retry
 from datetime import datetime, timedelta
 from restcountries import RestCountryApiV2 as rapi
 
+from importing import insert_data, insert_event
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--source', type=str, default='csv', help='Source of the data (csv or excel)')
 parser.add_argument('--mode', type=str, default='ingest', help='Working mode for ingestion or prediction pipeline')
@@ -92,45 +94,65 @@ if __name__ == "__main__":
         if args.mode == 'ingest':
             if args.source == 'csv':
                 occur = pd.read_json('/app/buffer/origin/date_csv_modified.json')
-                out = "/app/buffer/origin/metrics_csv.csv"
+                # out = "/app/buffer/origin/metrics_csv.csv"
             else:
                 occur = pd.read_json('/app/buffer/origin/date_xlsx_modified.json')
-                out = "/app/buffer/origin/metrics_xlsx.csv"
+                # out = "/app/buffer/origin/metrics_xlsx.csv"
         else:
             occur = pd.read_json('/app/buffer/message_broker/outline.json')
             out = "/app/buffer/message_broker/outline_data.csv"
-
-        for line in occur.itertuples():
+        def detach_info(line):
+            #TODO: crawl more historical data and change model 
+            date_str = "-".join([str(line.year), str(line.month).zfill(2), str(line.date).zfill(2)])
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+            last_30_days = (date_obj - timedelta(days=30)).strftime("%Y-%m-%d")
             info = {
                     'latitude': line.latitude,
                     'longitude': line.longitude,
-                    'start_date': "-".join([str(line.year), str(line.month).zfill(2), str(line.date).zfill(2)]),
-                    'end_date': "-".join([str(line.year), str(line.month).zfill(2), str(line.date).zfill(2)])
+                    'end_date': "-".join([str(line.year), str(line.month).zfill(2), str(line.date).zfill(2)]), # "-".join([str(line.year if line.month > 1 else line.year-1), str(line.month-1 if line.month > 1 else 12).zfill(2), str(line.date).zfill(2)]),
+                    'start_date': last_30_days
                 }
+            # info["start_date"] = "-".join([str(line.year), str(line.month-1 if line.date==1 else line.month).zfill(2), str(30 if line.date==1 else line.date-2).zfill(2)])
+            if args.mode == 'predict':
+                info["end_date"] = "-".join([str(line.year), str(line.month-1 if line.date==1 else line.month).zfill(2), str(30 if line.date==1 else line.date-2).zfill(2)])
+                info["start_date"] = "-".join([str(line.year), str(line.month-1 if line.date==1 else line.month).zfill(2), str(30 if line.date==1 else line.date-2).zfill(2)])
+            return info
+        for line in occur.itertuples():
+            info = detach_info(line)
+            # print(info)
             response = crawler.fetch_data(info)
             if isinstance(response, pd.DataFrame):
                 df = pd.DataFrame([line])
+                #TODO: Fill the dataframe missing column with infomation about event: 
+                # *23*30 ~ duplicate in 23 hours per day in 30 days
                 new_row = df.loc[0].copy()
-                df = df._append([new_row]*23, ignore_index=True)
+                df = (df._append([new_row]*743, ignore_index=True) if args.mode == 'ingest' else df._append([new_row]*23, ignore_index=True)) # 695
                 # Combine information with response DataFrame efficiently
                 combined_df = pd.concat([df, response.rename(columns={'date': 'datetime'})], axis=1)
                 # Handle potential column name conflicts:
                 if any(col in combined_df.columns for col in info.keys()):
                     combined_df.columns = [f'{col}_info' if col in info.keys() else col for col in combined_df.columns]
-                # countries = {}
-                # for country in pycountry.countries:
-                #     countries[country.name] = country.alpha_3
-                # combined_df['country_code'] = [countries.get(country, 'Unknown code') for country in combined_df['country']]
-                combined_df['country_code'] = combined_df['country'].apply(fetch_country_code)
+                # Create new col: country code 
+                if 'country' in combined_df.columns:
+                    combined_df['country_code'] = combined_df['country'].apply(fetch_country_code)
                 # print(combined_df)
             else:
                 print(f"Warning: Unexpected response type from crawler.fetch_data({info}). Expected pandas.DataFrame")
-            if line.Index == 0:
-                combined_df.to_csv(out, index=False)
+            
+            # combined_df.to_csv("temp.csv",index=False)
+
+            if args.mode == 'ingest':
+                insert_event(combined_df.iloc[0])
+                for index in range(743):
+                    insert_data(combined_df.iloc[index])
             else:
-                combined_df.to_csv(out, index=False,mode='a',header=False)
+                if line.Index == 0:
+                    combined_df.to_csv(out, index=False)
+                else:
+                    combined_df.to_csv(out, index=False,mode='a',header=False)
+                    print("inserted")
 
     except Exception as e:
-        print(e)
+        print("debug",e)
 
     

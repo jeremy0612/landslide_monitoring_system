@@ -106,5 +106,13 @@ CREATE TABLE Data (
   month SMALLINT NOT NULL CHECK (month BETWEEN 1 AND 12),  -- Enforce month range (1-12)
   year INTEGER NOT NULL
 )
-
-
+-- -- ===== Inference table ===== --
+-- CREATE TABLE Inference
+-- (
+--   longitude DECIMAL(11, 8) NOT NULL,  -- High precision for coordinates
+--   latitude DECIMAL(11, 8) NOT NULL,   -- High precision for coordinates
+--   date smallint NOT NULL,
+--   time TIME NULL,
+--   month SMALLINT NOT NULL CHECK (month BETWEEN 1 AND 12),  -- Enforce month range (1-12)
+--   year INTEGER NOT NULL
+-- )

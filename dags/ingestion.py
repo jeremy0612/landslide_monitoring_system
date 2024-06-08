@@ -90,12 +90,12 @@ with DAG(
         trigger_rule='all_success'
     )
 
-    crawled_csv = FileSensor(
-        task_id="crawled_csv",
-        filepath='/opt/airflow/buffer/origin/metrics_csv.csv',
-        poke_interval=10,
-        timeout=100
-    )
+    # crawled_csv = FileSensor(
+    #     task_id="crawled_csv",
+    #     filepath='/opt/airflow/buffer/origin/metrics_csv.csv',
+    #     poke_interval=10,
+    #     timeout=100
+    # )
 
     crawl_xlsx = GrpcOperator(
         task_id="crawl_xlsx",
@@ -109,41 +109,42 @@ with DAG(
         trigger_rule='all_success'
     )
 
-    crawled_xlsx = FileSensor(
-        task_id="crawled_xlsx",
-        filepath='/opt/airflow/buffer/origin/metrics_xlsx.csv',
-        poke_interval=10,
-        timeout=100
-    )
+    # crawled_xlsx = FileSensor(
+    #     task_id="crawled_xlsx",
+    #     filepath='/opt/airflow/buffer/origin/metrics_xlsx.csv',
+    #     poke_interval=10,
+    #     timeout=100
+    # )
 
-    import_csv = GrpcOperator(
-        task_id="import_csv",
-        stub_class=PingServiceStub,
-        call_func='command',
-        data={'request': ExeTask(command="import_csv")},
-        response_callback=response_handler,
-        grpc_conn_id='grpc_default',
-        retries=10,
-        retry_delay=10,
-        trigger_rule='all_success'
-    )
+    # import_csv = GrpcOperator(
+    #     task_id="import_csv",
+    #     stub_class=PingServiceStub,
+    #     call_func='command',
+    #     data={'request': ExeTask(command="import_csv")},
+    #     response_callback=response_handler,
+    #     grpc_conn_id='grpc_default',
+    #     retries=10,
+    #     retry_delay=10,
+    #     trigger_rule='all_success'
+    # )
 
-    import_xlsx = GrpcOperator(
-        task_id="import_xlsx",
-        stub_class=PingServiceStub,
-        call_func='command',
-        data={'request': ExeTask(command="import_xlsx")},
-        response_callback=response_handler,
-        grpc_conn_id='grpc_default',
-        retries=10,
-        retry_delay=10,
-        trigger_rule='all_success'
-    )
+    # import_xlsx = GrpcOperator(
+    #     task_id="import_xlsx",
+    #     stub_class=PingServiceStub,
+    #     call_func='command',
+    #     data={'request': ExeTask(command="import_xlsx")},
+    #     response_callback=response_handler,
+    #     grpc_conn_id='grpc_default',
+    #     retries=10,
+    #     retry_delay=10,
+    #     trigger_rule='all_success'
+    # )
 
     end = DummyOperator(task_id="end")
 
     # start >> extract_csv >> extracted_csv >> crawl_csv >> crawled_csv >> import_csv >> end
     start >> [extract_csv, extract_xlsx] 
-    extract_csv >> extracted_csv >> crawl_csv >> crawled_csv >> import_csv
-    extract_xlsx >> extracted_xlsx >> crawl_xlsx >> crawled_xlsx >> import_xlsx
-    [import_csv, import_xlsx] >> end
+    extract_csv >> extracted_csv >> crawl_csv #>> crawled_csv >> import_csv
+    extract_xlsx >> extracted_xlsx >> crawl_xlsx #>> crawled_xlsx >> import_xlsx
+    [crawl_csv, crawl_xlsx] >> end 
+    # [import_csv, import_xlsx] >> end

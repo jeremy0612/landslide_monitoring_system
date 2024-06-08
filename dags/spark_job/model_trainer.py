@@ -1,8 +1,8 @@
 from pyspark.ml.feature import VectorAssembler
 from pyspark.ml.classification import LogisticRegression
-from pyspark.ml.evaluation import BinaryClassificationEvaluator
+# from pyspark.ml.evaluation import BinaryClassificationEvaluator
 from pyspark.ml import Pipeline
-# from pyspark.ml.evaluation import BinaryClassificationEvaluator, MulticlassClassificationEvaluator
+from pyspark.ml.evaluation import BinaryClassificationEvaluator, MulticlassClassificationEvaluator
 from pyspark.sql import SparkSession
 from datetime import datetime
 from feature_builder import build_training_feature
@@ -89,6 +89,11 @@ def main(spark, experiment_name, experiment_id, model_name):
                                            "features_soil_temp_0_to_7", "features_soil_temp_7_to_28", "features_soil_temp_28_to_100", "features_soil_temp_100_to_255", \
                                             "features_soil_moisture_0_to_7", "features_soil_moisture_7_to_28", "features_soil_moisture_28_to_100", "features_soil_moisture_100_to_255"],\
                                 outputCol="features")
+    # assembler = VectorAssembler(inputCols=["features_temperature", "features_rain", "features_precipitation", "features_relative_humidity",\
+    #                                         "features_soil_temp_100_to_255", \
+    #                                         "features_soil_moisture_100_to_255"],\
+    #                             outputCol="features")
+        
     feature_df = build_training_feature(soil_df, weather_data_df, datetime_df, landslide_event_df)
     feature_df = assembler.transform(feature_df)
 
@@ -98,9 +103,9 @@ def main(spark, experiment_name, experiment_id, model_name):
     feature_df = feature_df.join(event_df,on=[event_df['event_id']==feature_df['event_id']])
 
     if model_name == "detector_region_1":
-        train_df = filter_by_region(feature_df, 70, 160, -13, 25) # Northern Asia
+        train_df = filter_by_region(feature_df, 70, 160, -13, 25) # Southeast Asia
     elif model_name == "detector_region_2":
-        train_df = filter_by_region(feature_df, -145, -36, -55, 63) # America
+        train_df = filter_by_region(feature_df, -130, -50, 0, 50) # Americas
         
     train(train_df)
 
@@ -112,7 +117,7 @@ def main(spark, experiment_name, experiment_id, model_name):
     
 
 def train(feature_df):
-    train_data, test_data = feature_df.randomSplit([0.8, 0.2], seed=42)
+    train_data, val_data, test_data = feature_df.randomSplit([0.5, 0.25, 0.25], seed=42)
     # Check DataFrame sizes after splitting
     print(f"Train data size: {train_data.count()}")
     print(f"Test data size: {test_data.count()}")
@@ -122,9 +127,11 @@ def train(feature_df):
     print(f"Test data features: {test_data.schema.fields}")
     # Define and log model parameters
     model_params = {
-        "maxIter": 10,
-        "regParam": 0.3,
-        "elasticNetParam": 0.8
+        "maxIter": 150,
+        "regParam": 0.5,
+        "elasticNetParam": 0.25,
+        "family": "binomial",
+        "tol": 1e-08
     }
     
     # Start MLflow run with experiment ID and name (optional)
@@ -133,16 +140,29 @@ def train(feature_df):
                           run_name="{}_{}".format(model_name, datetime.now().strftime("%Y%m%d"))) as run:
         # Train the Logistic Regression model
         lr = LogisticRegression(featuresCol="features", labelCol="label", maxIter=model_params["maxIter"], regParam=model_params["regParam"], elasticNetParam=model_params["elasticNetParam"])
-        pipeline = Pipeline(stages=[lr])
-        pipeline.fit(train_data)
+        # pipeline = Pipeline(stages=[lr])
+        model = lr.fit(train_data)
         # run_id = run.info.run_id
         # Train-test evaluation (example)
-        # predictions = model.transform(test_data)
-        # evaluator = BinaryClassificationEvaluator(metricName="accuracy")
-        # accuracy = evaluator.evaluate(predictions)
+        predictions = model.transform(val_data)
+        evaluator = BinaryClassificationEvaluator(rawPredictionCol="rawPrediction", labelCol="label")
+        auc = evaluator.evaluate(predictions)
+        # Accuracy, Precision, and Recall
+        multi_evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction")
+        accuracy = multi_evaluator.evaluate(predictions, {multi_evaluator.metricName: "accuracy"})
+        precision = multi_evaluator.evaluate(predictions, {multi_evaluator.metricName: "weightedPrecision"})
+        recall = multi_evaluator.evaluate(predictions, {multi_evaluator.metricName: "weightedRecall"})
+
+        print(f"AUC-ROC: {auc:.4f}")
+        print(f"Accuracy: {accuracy:.4f}")
+        print(f"Precision: {precision:.4f}")
+        print(f"Recall: {recall:.4f}")
 
         # Log training metric (example)
-        # mlflow.log_metric(key="accuracy", value=accuracy)
+        mlflow.log_metric(key="accuracy", value=accuracy)
+        mlflow.log_metric(key="precision", value=precision)
+        mlflow.log_metric(key="auc-roc",value=auc)
+        mlflow.log_metric(key="recall",value=recall)
         # Log the model as an artifact
         # mlflow.spark.log_model(spark_model=model, artifact_path="model")
         # Register the model (optional, but recommended) 

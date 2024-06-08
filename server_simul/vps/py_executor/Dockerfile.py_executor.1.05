@@ -7,22 +7,15 @@ WORKDIR /app
 # Make RUN commands use `bash --login`:
 SHELL ["/bin/bash", "--login", "-c"]
 
-# Create ingestion environment using the YAML file
-COPY ingestion.yml ./
-RUN conda env create -f ingestion.yml
-# Create grpc environment using the YAML file
-COPY grpc.yml ./
-RUN conda env create -f grpc.yml
-# Create aws_mqtt environment using the YAML file
 COPY mqtt.yml ./
 RUN conda env create -f mqtt.yml
 
 # Activate conda environment
-# ENV PATH /opt/conda/envs/grpc/bin:$PATH
-# RUN /bin/bash -c "source activate grpc"
+ENV PATH /opt/conda/envs/aws_mqtt/bin:$PATH
+RUN /bin/bash -c "source activate aws_mqtt"
 
 # Custom entrypoint
-COPY entrypoint.sh /app
+# COPY entrypoint.sh /app
 # ENTRYPOINT [ "/bin/bash","/app/entrypoint.sh" ]
 
 # Initialize conda in bash config fiiles:

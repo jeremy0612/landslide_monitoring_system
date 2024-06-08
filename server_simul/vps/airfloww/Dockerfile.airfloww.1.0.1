@@ -14,3 +14,4 @@ USER airflow
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 RUN pip install -U apache-airflow-providers-apache-spark pyspark findspark --user
 RUN pip install mlflow
+RUN pip install torch

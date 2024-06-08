@@ -175,8 +175,8 @@ services:
       - ../../tmp/buffer:/app/buffer
       - ../../tmp/executor_logs:/app/logs
     tty: true
-    command: /bin/bash -c "python /app/tasks/serve.py"
-
+    command: /bin/bash /app/entrypoint.sh
+    
   spark-master:
     image: sparkk:1.0.1
     # build: 

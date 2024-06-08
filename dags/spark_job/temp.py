@@ -14,3 +14,4 @@ run_id = client.search_runs(
     filter_string="tags.mlflow.runName = 'detector_region_2_20240501151253' "
 )[0].info.run_id
 print(run_id)
+

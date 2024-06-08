@@ -4,9 +4,10 @@ import pandas as pd
 import argparse
 import sys
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--source', type=str, default='csv', help='Source of the data (csv or excel)')
-args = parser.parse_args()
+# parser = argparse.ArgumentParser()
+# parser.add_argument('--sourcee', type=str, default='csv', help='sourcee of the data (csv or excel)')
+# args = parser.parse_args()
+
 # psql_conn = PostgreSQLConnection()
 # psql_conn.connect()
 # psql_conn.execute_query("insert into Location(country, near, continent, longitude, latitude) values\
@@ -15,7 +16,8 @@ args = parser.parse_args()
 #     VALUES ('Rockfall',    'Debris flow',     'Small', '2024-03-18', '14:30:00',  'UTC',  3, 2024,  'Vietnam', 'ang',  'AS', 108.33,  16.06 )\
 #                         returning event_id,location_id, datetime_id;")
 # psql_conn.disconnect()
-
+psql_conn = PostgreSQLConnection()
+psql_conn.connect()
 
 
 def insert_event(row):
@@ -26,6 +28,7 @@ def insert_event(row):
                  "UTC", row['month'],row['year'], str(row['country_code']).replace("'", "''"), str(row['near']).replace("'", "''"), row['continentcode'],\
                  row['elevation'], row['longitude_info'], row['latitude_info'])
     query = query.replace("'nan'", "NULL")
+    query = query.replace("'None'", "NULL")
     # print(query)
     result = psql_conn.execute_query(query)
     if not result:
@@ -49,12 +52,11 @@ def insert_data(row):
         sys.exit(0)
 if __name__ == '__main__':
     # Define the filename of the JSON file
-    if args.source == 'csv':
+    if args.sourcee == 'csv':
         file_path = "/app/buffer/origin/metrics_csv.csv"
     else:
         file_path = "/app/buffer/origin/metrics_xlsx.csv"
-    psql_conn = PostgreSQLConnection()
-    psql_conn.connect()
+    
     # Read the data from the JSON file and import into the database
     try:
         with open(file_path, 'r') as f:

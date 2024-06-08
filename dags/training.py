@@ -122,7 +122,7 @@ def training():
         )
     train_region_1 = SparkSubmitOperator(
         task_id='trainer_region_1',
-        application='/opt/airflow/dags/spark_job/model_trainer.py',
+        application='/opt/airflow/dags/spark_job/model_trainer2.py',
         conn_id='spark_default',
         jars='/opt/airflow/dags/spark_job/postgresql-42.3.9.jar',
         application_args=[
@@ -211,7 +211,7 @@ def training():
 
     train_region_2 = SparkSubmitOperator(
         task_id='trainer_region_2',
-        application='/opt/airflow/dags/spark_job/model_trainer.py',
+        application='/opt/airflow/dags/spark_job/model_trainer2.py',
         conn_id='spark_default',
         jars='/opt/airflow/dags/spark_job/postgresql-42.3.9.jar',
         application_args=[

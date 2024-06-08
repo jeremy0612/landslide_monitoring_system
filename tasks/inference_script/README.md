@@ -1,2 +1,3 @@
 Since the inference pipeline reuse crawling task from ingestion pipeline, we have a subcriber for reading outline points from MQTT broker. 
 An exactly the same `certs` folder as the one needed for raspi is required here in this folder.
+`python subscribe.py --topic landslide_event --ca_file certs/Amazon-root-CA-1.pem --cert certs/device.pem.crt --key certs/private.pem.key  --endpoint a1qhqiuacj9opy-ats.iot.us-east-1.amazonaws.com `

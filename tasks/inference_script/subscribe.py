@@ -53,8 +53,33 @@ def on_resubscribe_complete(resubscribe_future):
 # Callback when the subscribed topic receives a message
 def on_message_received(topic, payload, dup, qos, retain, **kwargs):
     print("Received message from topic '{}': {}".format(topic, payload))
+    try:
+        # Initialize an empty list to store all messages
+        message_dict = json.loads(payload)
+        message_dict['date'] = int(message_dict['datetime'][:2])-1
+        message_dict['month'] = int(message_dict['datetime'][2:4])
+        message_dict['year'] = int('20'+message_dict['datetime'][4:])
+        message_dict['time'] = "23:59:00"
+        all_messages = []
+        # Open the file in read mode (optional, to check for existing data)
+        with open("/app/buffer/message_broker/outline.json", "r") as f:
+            try:
+                # Attempt to load existing data as a list (assuming the file is empty or a list)
+                existing_data = json.load(f)
+            except json.JSONDecodeError:  # Handle empty file or non-list data
+                existing_data = []
+        # Combine existing data (if any) with the new message
+        all_messages.extend(existing_data)
+        all_messages.append(message_dict)
+        # Open the file in write mode (truncate existing content)
+        with open("/app/buffer/message_broker/outline.json", "w") as myfile:
+            # Write the combined list of messages as JSON to the file
+            json.dump(all_messages, myfile, indent=4)
+    except json.JSONDecodeError as e:
+        print("Error decoding JSON:", e)
     global received_count
     received_count += 1
+
     # if received_count == 100:
     #     received_count = 0
     #     print("Received 100 messages!")
